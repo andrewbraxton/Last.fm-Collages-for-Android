@@ -3,12 +3,15 @@ package com.andrewbraxton.lastfmcollagesforandroid;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity {
+
+    private static final String CLICK_TAG = "ButtonClicked";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -17,10 +20,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         Toolbar myToolbar = findViewById(R.id.main_toolbar);
         setSupportActionBar(myToolbar);
-
-        Button generate = findViewById(R.id.generate);
-        generate.setOnClickListener(this);
-
     }
 
     @Override
@@ -30,15 +29,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return true;
     }
 
-    @Override
-    public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.generate:
-                break;
-            case R.id.share:
-                break;
-            case R.id.download:
-                break;
-        }
+    public void generateImage(View v) {
+        Log.d(CLICK_TAG, "Generate");
     }
+
+    public void openSettings(MenuItem v) {
+        Log.d(CLICK_TAG, "Settings");
+    }
+
+    public void shareImage(MenuItem v) {
+        Log.d(CLICK_TAG, "Share");
+    }
+
+    public void downloadImage(MenuItem v) {
+        Log.d(CLICK_TAG, "Download");
+    }
+
 }

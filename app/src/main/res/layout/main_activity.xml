@@ -41,6 +41,7 @@
         android:layout_marginTop="164dp"
         android:layout_marginEnd="8dp"
         android:fontFamily="sans-serif"
+        android:onClick="generateImage"
         android:text="@string/button_generate"
         android:textAllCaps="true"
         app:layout_constraintEnd_toEndOf="parent"

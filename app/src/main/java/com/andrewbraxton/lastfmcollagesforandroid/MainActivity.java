@@ -35,6 +35,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (v.getId()) {
             case R.id.generate:
                 break;
+            case R.id.share:
+                break;
+            case R.id.download:
+                break;
         }
     }
 }

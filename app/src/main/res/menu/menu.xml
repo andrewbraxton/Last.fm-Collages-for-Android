@@ -3,6 +3,16 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
+        android:id="@+id/share"
+        android:icon="?android:attr/actionModeShareDrawable"
+        android:title="Share"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/download"
+        android:icon="@android:drawable/stat_sys_download"
+        android:title="Download"
+        app:showAsAction="always" />
+    <item
         android:title="Settings"
         app:showAsAction="never" />
 </menu>

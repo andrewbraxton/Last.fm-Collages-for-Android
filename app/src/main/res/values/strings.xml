@@ -1,6 +1,9 @@
 <resources>
     <string name="app_name">Last.fm Collages</string>
 
+    <string name="toast_no_username">Please enter a Last.fm username in settings</string>
+    <string name="toast_invalid_username">Please ensure the Last.fm username is valid</string>
+
     <string name="text_button_generate">Generate</string>
 
     <string name="title_menu_settings">Settings</string>

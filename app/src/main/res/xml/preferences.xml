@@ -3,17 +3,21 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <PreferenceCategory
-        android:title="@string/lastfm_pref_title"
+        android:title="@string/title_collage_pref"
         app:iconSpaceReserved="false">
-
         <EditTextPreference
-            android:defaultValue="None set"
-            android:key="username_key"
+            android:key="@string/key_pref_username"
             android:selectAllOnFocus="true"
             android:singleLine="true"
-            android:title="@string/username_pref_title"
+            android:title="@string/title_pref_username"
             app:iconSpaceReserved="false" />
-
+        <ListPreference
+            android:defaultValue="7"
+            android:entries="@array/collage_range_names_array"
+            android:entryValues="@array/collage_range_values_array"
+            android:key="@string/key_pref_date_range"
+            android:title="@string/title_pref_date_range"
+            app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
 </PreferenceScreen>

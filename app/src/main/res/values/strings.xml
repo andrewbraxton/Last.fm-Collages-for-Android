@@ -1,9 +1,16 @@
 <resources>
     <string name="app_name">Last.fm Collages</string>
-    <string name="button_generate">Generate</string>
-    <string name="menu_settings">Settings</string>
-    <string name="menu_share">Share</string>
-    <string name="menu_download">Download</string>
-    <string name="username_pref_title">Set username</string>
-    <string name="lastfm_pref_title">Last.fm settings</string>
+
+    <string name="text_button_generate">Generate</string>
+
+    <string name="title_menu_settings">Settings</string>
+    <string name="title_menu_share">Share</string>
+    <string name="title_menu_download">Download</string>
+
+    <string name="title_collage_pref">Collage settings</string>
+    <string name="title_pref_username">Last.fm username</string>
+    <string name="title_pref_date_range">Date range</string>
+
+    <string name="key_pref_username">username</string>
+    <string name="key_pref_date_range">dateRange</string>
 </resources>

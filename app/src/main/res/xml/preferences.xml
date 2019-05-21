@@ -12,6 +12,13 @@
             android:title="@string/title_pref_username"
             app:iconSpaceReserved="false" />
         <ListPreference
+            android:defaultValue="3"
+            android:entries="@array/collage_size_names_array"
+            android:entryValues="@array/collage_size_values_array"
+            android:key="@string/key_pref_size"
+            android:title="@string/title_pref_size"
+            app:iconSpaceReserved="false" />
+        <ListPreference
             android:defaultValue="7"
             android:entries="@array/collage_range_names_array"
             android:entryValues="@array/collage_range_values_array"

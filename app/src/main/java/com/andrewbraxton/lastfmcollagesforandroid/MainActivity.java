@@ -40,10 +40,13 @@ public class MainActivity extends AppCompatActivity {
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String username = prefs.getString(getString(R.string.key_pref_username), null);
+        int numDays = Integer.parseInt(prefs.getString(getString(R.string.key_pref_date_range), null));
+
         if (username == null || username.isEmpty()) {
             Toast.makeText(this, getString(R.string.toast_no_username), Toast.LENGTH_SHORT).show();
         }
 
+        String url = buildUrlString(username, getFromDate(numDays), getToDate());
     }
 
     public void openSettings(MenuItem v) {
@@ -61,4 +64,25 @@ public class MainActivity extends AppCompatActivity {
         Log.d(CLICK_TAG, "Download");
     }
 
+    // Helper functions.
+
+    private long getFromDate(int numDays) {
+        if (numDays == -1) { // "All-time" was selected in preferences
+            return 0;
+        }
+        return getToDate() - (numDays * 86400); // 86400 seconds in a day
+    }
+
+    private long getToDate() {
+        return System.currentTimeMillis() / 1000L; // conversion to Unix timestamp
+    }
+
+    private String buildUrlString(String username, long fromDate, long toDate) {
+        String url = ApiInfoHolder.BASE_URL;
+        url += "&user=" + username;
+        url += "&from=" + fromDate + "&to=" + toDate;
+        url += "&api_key=" + ApiInfoHolder.API_KEY;
+        url += "&format=json";
+        return url;
+    }
 }

@@ -39,11 +39,12 @@ public class MainActivity extends AppCompatActivity {
         Log.d(CLICK_TAG, "Generate");
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        String username = prefs.getString(getString(R.string.key_pref_username), null);
-        int numDays = Integer.parseInt(prefs.getString(getString(R.string.key_pref_date_range), null));
+        String username = prefs.getString(getString(R.string.key_pref_username), "");
+        int numDays = Integer.parseInt(prefs.getString(getString(R.string.key_pref_date_range), "7"));
 
-        if (username == null || username.isEmpty()) {
+        if (username.isEmpty()) {
             Toast.makeText(this, getString(R.string.toast_no_username), Toast.LENGTH_SHORT).show();
+            return;
         }
 
         String url = buildUrlString(username, getFromDate(numDays), getToDate());

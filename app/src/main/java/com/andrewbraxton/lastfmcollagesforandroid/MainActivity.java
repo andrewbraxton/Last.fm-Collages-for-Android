@@ -13,11 +13,21 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
+
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import com.google.gson.Gson;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String CLICK_TAG = "ButtonClicked";
+
+    private RequestQueue queue;
+    private final Gson gson = new Gson();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,6 +36,8 @@ public class MainActivity extends AppCompatActivity {
 
         Toolbar toolbar = findViewById(R.id.main_toolbar);
         setSupportActionBar(toolbar);
+
+        queue = Volley.newRequestQueue(this);
     }
 
     @Override
@@ -48,6 +60,15 @@ public class MainActivity extends AppCompatActivity {
         }
 
         String url = buildUrlString(username, getFromDate(numDays), getToDate());
+        StringRequest stringRequest = new StringRequest(url, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                AlbumChart chartObject = gson.fromJson(response, AlbumChart.class);
+                ImageView chartImage = findViewById(R.id.chartImage);
+                chartImage.setImageDrawable(chartObject.generateDrawable());
+            }
+        }, error -> {/* TODO: implement error listener*/ Log.e("VolleyError", error.getMessage());});
+        queue.add(stringRequest);
     }
 
     public void openSettings(MenuItem v) {
@@ -79,10 +100,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String buildUrlString(String username, long fromDate, long toDate) {
-        String url = ApiInfoHolder.BASE_URL;
+        String url = ApiInfo.BASE_URL + ApiInfo.GET_CHART;
         url += "&user=" + username;
         url += "&from=" + fromDate + "&to=" + toDate;
-        url += "&api_key=" + ApiInfoHolder.API_KEY;
+        url += "&api_key=" + ApiInfo.API_KEY;
         url += "&format=json";
         return url;
     }

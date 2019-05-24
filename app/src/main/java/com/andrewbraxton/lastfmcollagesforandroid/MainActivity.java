@@ -63,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
         StringRequest stringRequest = new StringRequest(url, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
+                response = response.replace("#", ""); // removing the pound signs in Last.fm's JSON keys
                 AlbumChart chartObject = gson.fromJson(response, AlbumChart.class);
                 ImageView chartImage = findViewById(R.id.chartImage);
                 chartImage.setImageDrawable(chartObject.generateDrawable());

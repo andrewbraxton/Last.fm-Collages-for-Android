@@ -59,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        String url = buildUrlString(username, getFromDate(numDays), getToDate());
+        String url = ApiStringBuilder.buildGetAlbumChartUrl(username, getFromDate(numDays), getToDate());
         StringRequest stringRequest = new StringRequest(
                 url,
                 response -> {
@@ -110,13 +110,4 @@ public class MainActivity extends AppCompatActivity {
         return System.currentTimeMillis() / 1000L; // conversion to Unix timestamp
     }
 
-    private String buildUrlString(String username, long fromDate, long toDate) {
-        // TODO: restructure ApiInfo to hold string literals
-        String url = ApiInfo.BASE_URL + ApiInfo.GET_CHART;
-        url += "&user=" + username;
-        url += "&from=" + fromDate + "&to=" + toDate;
-        url += "&api_key=" + ApiInfo.API_KEY;
-        url += "&format=json";
-        return url;
-    }
 }

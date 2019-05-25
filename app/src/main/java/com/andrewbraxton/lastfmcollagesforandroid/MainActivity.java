@@ -16,8 +16,8 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.android.volley.ClientError;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.gson.Gson;
@@ -60,15 +60,23 @@ public class MainActivity extends AppCompatActivity {
         }
 
         String url = buildUrlString(username, getFromDate(numDays), getToDate());
-        StringRequest stringRequest = new StringRequest(url, new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                response = response.replace("#", ""); // removing the pound signs in Last.fm's JSON keys
-                AlbumChart chartObject = gson.fromJson(response, AlbumChart.class);
-                ImageView chartImage = findViewById(R.id.chartImage);
-                chartImage.setImageDrawable(chartObject.generateDrawable());
-            }
-        }, error -> {/* TODO: implement error listener*/ Log.e("VolleyError", error.getMessage());});
+        StringRequest stringRequest = new StringRequest(
+                url,
+                response -> {
+                    response = response.replace("#", ""); // removing the pound signs in Last.fm's JSON keys
+                    AlbumChart chartObject = gson.fromJson(response, AlbumChart.class);
+                    ImageView chartImage = findViewById(R.id.chartImage);
+                    chartImage.setImageDrawable(chartObject.generateDrawable());
+                    Toast.makeText(this, getString(R.string.toast_generate_successful), Toast.LENGTH_SHORT).show();
+                },
+                error -> {
+                    String errorMessage = getString(R.string.toast_network_error);
+                    if (error instanceof ClientError) {
+                        errorMessage = getString(R.string.toast_invalid_username);
+                    }
+                    Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show();
+                }
+        );
         queue.add(stringRequest);
     }
 
@@ -81,10 +89,12 @@ public class MainActivity extends AppCompatActivity {
 
     public void shareImage(MenuItem v) {
         Log.d(CLICK_TAG, "Share");
+        // TODO: implement shareImage()
     }
 
     public void downloadImage(MenuItem v) {
         Log.d(CLICK_TAG, "Download");
+        // TODO: implement downloadImage()
     }
 
     // Helper functions.
@@ -101,6 +111,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String buildUrlString(String username, long fromDate, long toDate) {
+        // TODO: restructure ApiInfo to hold string literals
         String url = ApiInfo.BASE_URL + ApiInfo.GET_CHART;
         url += "&user=" + username;
         url += "&from=" + fromDate + "&to=" + toDate;

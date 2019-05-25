@@ -15,4 +15,5 @@ public class AlbumChart {
         // TODO: implement generateDrawable()
         return null;
     }
+
 }

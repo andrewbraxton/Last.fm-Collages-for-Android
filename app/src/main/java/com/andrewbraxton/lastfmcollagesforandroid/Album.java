@@ -12,6 +12,11 @@ public class Album {
         private String text;
     }
 
+    @Override
+    public String toString() {
+        return artist.text + " - " + name;
+    }
+
     public String getArtistMbid() {
         return artist.mbid;
     }

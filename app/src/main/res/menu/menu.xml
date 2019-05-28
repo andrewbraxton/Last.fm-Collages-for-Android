@@ -5,18 +5,18 @@
     <item
         android:id="@+id/share"
         android:icon="?android:attr/actionModeShareDrawable"
-        android:onClick="shareImage"
+        android:onClick="shareButtonClicked"
         android:title="@string/title_menu_share"
         app:showAsAction="always" />
     <item
         android:id="@+id/download"
         android:icon="@android:drawable/stat_sys_download"
-        android:onClick="downloadImage"
+        android:onClick="downloadButtonClicked"
         android:title="@string/title_menu_download"
         app:showAsAction="always" />
     <item
         android:id="@+id/settings"
-        android:onClick="openSettings"
+        android:onClick="settingsButtonClicked"
         android:title="@string/title_menu_settings"
         app:showAsAction="never" />
 </menu>

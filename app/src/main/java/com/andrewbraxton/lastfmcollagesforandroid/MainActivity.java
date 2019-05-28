@@ -20,8 +20,6 @@ import android.widget.Toast;
 
 import com.android.volley.ClientError;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
@@ -33,14 +31,19 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String CLICK_TAG = "ButtonClicked";
+    // TODO: Javadoc
+    // TODO: better logging
+
+    private static final String LOG_TAG = "MainActivityTag";
+
+    private static final String COVERART_DIR = "coverart";
+    private static final String COLLAGE_DIR = "collage";
 
     private RequestQueue queue;
     private final Gson gson = new Gson();
@@ -55,8 +58,8 @@ public class MainActivity extends AppCompatActivity {
 
         queue = Volley.newRequestQueue(this);
 
-        File coverArtDir = new File(getFilesDir(), "coverart");
-        File collageDir = new File(getFilesDir(), "collage");
+        File coverArtDir = new File(getFilesDir(), COVERART_DIR);
+        File collageDir = new File(getFilesDir(), COLLAGE_DIR);
         coverArtDir.mkdir();
         collageDir.mkdir();
     }
@@ -68,10 +71,8 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    public void generateImage(View v) {
-        Log.d(CLICK_TAG, "Generate");
-
-        clearCoverArtDir();
+    public void generateButtonClicked(View v) {
+        Log.i(LOG_TAG, "Generate button clicked");
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String username = prefs.getString(getString(R.string.key_pref_username), "");
@@ -104,25 +105,30 @@ public class MainActivity extends AppCompatActivity {
         queue.add(stringRequest);
     }
 
-    public void openSettings(MenuItem v) {
-        Log.d(CLICK_TAG, "Settings");
+    public void settingsButtonClicked(MenuItem v) {
+        Log.i(LOG_TAG, "Settings button clicked");
 
         Intent intent = new Intent(this, SettingsActivity.class);
         startActivity(intent);
     }
 
-    public void shareImage(MenuItem v) {
-        Log.d(CLICK_TAG, "Share");
-        // TODO: implement shareImage()
+    public void shareButtonClicked(MenuItem v) {
+        Log.i(LOG_TAG, "Share button clicked");
+        // TODO: implement
     }
 
-    public void downloadImage(MenuItem v) {
-        Log.d(CLICK_TAG, "Download");
-        // TODO: implement downloadImage()
+    public void downloadButtonClicked(MenuItem v) {
+        Log.i(LOG_TAG, "Download button clicked");
+        // TODO: implement
     }
 
     // Helper functions.
 
+    /**
+     * Returns the initial Unix timestamp for use in the "from" API parameter.
+
+     * @param numDays number of days the collage spans
+     */
     private long getFromDate(int numDays) {
         if (numDays == -1) { // "All-time" was selected in preferences
             return 0;
@@ -130,95 +136,94 @@ public class MainActivity extends AppCompatActivity {
         return getToDate() - (numDays * 86400); // 86400 seconds in a day
     }
 
+    /** Returns the Unix timestamp of the current moment for use in the "to" API parameter. */
     private long getToDate() {
-        return System.currentTimeMillis() / 1000L; // conversion to Unix timestamp
+        return System.currentTimeMillis() / 1000L;
     }
 
     /**
      * Fetches the cover art for this album from the Last.fm API and downloads it to internal storage.
      *
-     * @param album the album to get the cover art for
+     * @param album    the album to get the cover art for
      * @param filename the name that the downloaded file will have
      */
     private void fetchCoverArt(Album album, String filename) {
+        // TODO: implement actual error handling
+        // TODO: make readable
         String albumInfoUrl = ApiStringBuilder.buildGetAlbumInfoUrl(album);
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(albumInfoUrl, null, response -> {
-            try {
-                JSONArray imageUrls = response.getJSONObject("album").getJSONArray("image");
-                JSONObject largestImageObject = imageUrls.getJSONObject(imageUrls.length()-1);
-                String largestImageUrl = largestImageObject.getString("#text");
-                ImageRequest imageRequest = new ImageRequest(largestImageUrl, bitmap -> {
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                albumInfoUrl,
+                null,
+                response -> {
                     try {
-                        File imageFile = new File(getCoverArtDir(), filename);
-                        OutputStream fOutStream = new FileOutputStream(imageFile);
-                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, fOutStream);
-                        fOutStream.close();
+                        JSONArray imageUrls = response.getJSONObject("album").getJSONArray("image");
+                        JSONObject largestImageObject = imageUrls.getJSONObject(imageUrls.length()-1);
+                        String largestImageUrl = largestImageObject.getString("#text");
+                        ImageRequest imageRequest = new ImageRequest(
+                                largestImageUrl,
+                                bitmap -> {
+                                    try {
+                                        Log.d(LOG_TAG, "Fetch success: " + album);
 
-                        Log.i("FetchCoverArt", "Success: " + filename);
-                    } catch (Exception e) {
-                        // TODO: implement
-                        Log.e("FetchCoverArt", "ImageRequest Error1: " + filename);
+                                        File imageFile = new File(getCoverArtDir(), filename);
+                                        OutputStream fOutStream = new FileOutputStream(imageFile);
+                                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, fOutStream);
+                                        fOutStream.close();
+                                    } catch (Exception e) {
+                                        Log.e(LOG_TAG, "Fetch error (ImageRequest Error1): " + album);
+                                    }
+                                }, 0, 0, null, null,
+                                error -> {
+                                    Log.e(LOG_TAG, "Fetch error (ImageRequest Error2): " + album);
+                                });
+                        queue.add(imageRequest);
+                    } catch (JSONException e) {
+                        // album couldn't be found
+                        Log.e(LOG_TAG, "Fetch error (JsonRequest Error1): " + album);
                     }
-                }, 0, 0, null, null, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        // TODO: implement
-                        Log.e("FetchCoverArt", "ImageRequest Error2: " + filename);
-                    }
+                },
+                error -> {
+                    Log.e(LOG_TAG, "Fetch error (JsonRequest Error2): " + album);
                 });
-                queue.add(imageRequest);
-            } catch (JSONException e) {
-                // TODO: implement
-                Log.e("FetchCoverArt", "JsonRequest Error1: " + filename);
-            }
-
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                // TODO: implement
-                Log.e("FetchCoverArt", "JsonRequest Error2: " + filename);
-            }
-        });
         queue.add(jsonObjectRequest);
     }
 
-    /**
-     * Returns the album chart as a Drawable.
-     *
-     * @param chartObject
-     * @return
-     */
     private Drawable generateChartDrawable(AlbumChart chartObject, int collageSize) {
-        // TODO: implement
+        clearCoverArtDir();
         List<Album> albums = chartObject.getAlbums();
-        String filename = "coverart";
         int numAlbums = collageSize * collageSize;
         for (int i = 0; i < numAlbums; i++) {
-            fetchCoverArt(albums.get(i), filename + i);
+            fetchCoverArt(albums.get(i), i + ".png");
         }
 
+        // TODO: implement collage generation
         return null;
     }
 
+    /** Returns the directory in internal storage where album cover arts are stored. */
     private File getCoverArtDir() {
-        return new File(getFilesDir(), "coverart");
+        return new File(getFilesDir(), COVERART_DIR);
     }
 
+    /** Returns the directory in internal storage where generated collages are stored. */
     private File getCollageDir() {
-        return new File(getFilesDir(), "collage");
+        return new File(getFilesDir(), COLLAGE_DIR);
     }
 
+    /** Clears the cover art directory in internal storage. */
     private void clearCoverArtDir() {
-        for (File coverArt: getCoverArtDir().listFiles()) {
+        for (File coverArt : getCoverArtDir().listFiles()) {
             coverArt.delete();
         }
+        Log.i(LOG_TAG, "Cover art directory cleared");
     }
 
+    /** Clears the collage directory in internal storage. */
     private void clearCollageDir() {
-        for (File collage: getCollageDir().listFiles()) {
+        for (File collage : getCollageDir().listFiles()) {
             collage.delete();
         }
+        Log.i(LOG_TAG, "Collage directory cleared");
     }
-
 
 }

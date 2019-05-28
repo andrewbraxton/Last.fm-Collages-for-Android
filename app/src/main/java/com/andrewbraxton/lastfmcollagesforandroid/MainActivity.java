@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -70,9 +71,12 @@ public class MainActivity extends AppCompatActivity {
     public void generateImage(View v) {
         Log.d(CLICK_TAG, "Generate");
 
+        clearCoverArtDir();
+
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String username = prefs.getString(getString(R.string.key_pref_username), "");
         int numDays = Integer.parseInt(prefs.getString(getString(R.string.key_pref_date_range), "7"));
+        int collageSize = Integer.parseInt(prefs.getString(getString(R.string.key_pref_size), "3"));
 
         if (username.isEmpty()) {
             Toast.makeText(this, getString(R.string.toast_no_username), Toast.LENGTH_SHORT).show();
@@ -86,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
                     response = response.replace("#", ""); // removing the pound signs in Last.fm's JSON keys
                     AlbumChart chartObject = gson.fromJson(response, AlbumChart.class);
                     ImageView chartImage = findViewById(R.id.chartImage);
-                    chartImage.setImageDrawable(generateChartDrawable(chartObject));
+                    chartImage.setImageDrawable(generateChartDrawable(chartObject, collageSize));
                     Toast.makeText(this, getString(R.string.toast_generate_successful), Toast.LENGTH_SHORT).show();
                 },
                 error -> {
@@ -149,25 +153,30 @@ public class MainActivity extends AppCompatActivity {
                         OutputStream fOutStream = new FileOutputStream(imageFile);
                         bitmap.compress(Bitmap.CompressFormat.PNG, 100, fOutStream);
                         fOutStream.close();
+
+                        Log.i("FetchCoverArt", "Success: " + filename);
                     } catch (Exception e) {
                         // TODO: implement
+                        Log.e("FetchCoverArt", "ImageRequest Error1: " + filename);
                     }
                 }, 0, 0, null, null, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         // TODO: implement
+                        Log.e("FetchCoverArt", "ImageRequest Error2: " + filename);
                     }
                 });
                 queue.add(imageRequest);
             } catch (JSONException e) {
-                e.printStackTrace();
                 // TODO: implement
+                Log.e("FetchCoverArt", "JsonRequest Error1: " + filename);
             }
 
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
                 // TODO: implement
+                Log.e("FetchCoverArt", "JsonRequest Error2: " + filename);
             }
         });
         queue.add(jsonObjectRequest);
@@ -179,8 +188,15 @@ public class MainActivity extends AppCompatActivity {
      * @param chartObject
      * @return
      */
-    private Drawable generateChartDrawable(AlbumChart chartObject) {
+    private Drawable generateChartDrawable(AlbumChart chartObject, int collageSize) {
         // TODO: implement
+        List<Album> albums = chartObject.getAlbums();
+        String filename = "coverart";
+        int numAlbums = collageSize * collageSize;
+        for (int i = 0; i < numAlbums; i++) {
+            fetchCoverArt(albums.get(i), filename + i);
+        }
+
         return null;
     }
 

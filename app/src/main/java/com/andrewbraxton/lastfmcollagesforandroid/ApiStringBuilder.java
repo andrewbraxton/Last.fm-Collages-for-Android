@@ -32,11 +32,11 @@ public final class ApiStringBuilder {
         return url;
     }
 
-    public static String buildGetAlbumInfoUrl(String artist, String album, String mbid) {
+    public static String buildGetAlbumInfoUrl(Album album) {
         String url = BASE_URL + METHOD + ALBUM_GET_INFO;
         url += PARAM_APIKEY + API_KEY;
-        url += PARAM_ARTIST + artist + PARAM_ALBUM + album;
-        url += PARAM_MBID + mbid;
+        url += PARAM_ARTIST + album.getArtistName() + PARAM_ALBUM + album.getName();
+        //url += PARAM_MBID + album.getMbid();
         url += FORMAT_JSON;
         return url;
     }

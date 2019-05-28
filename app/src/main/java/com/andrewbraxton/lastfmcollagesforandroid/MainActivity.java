@@ -1,6 +1,8 @@
 package com.andrewbraxton.lastfmcollagesforandroid;
 
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -18,9 +20,17 @@ import android.widget.Toast;
 
 import com.android.volley.ClientError;
 import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.ImageRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.gson.Gson;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -66,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
                     response = response.replace("#", ""); // removing the pound signs in Last.fm's JSON keys
                     AlbumChart chartObject = gson.fromJson(response, AlbumChart.class);
                     ImageView chartImage = findViewById(R.id.chartImage);
-                    chartImage.setImageDrawable(chartObject.generateDrawable());
+                    chartImage.setImageDrawable(generateChartDrawable(chartObject));
                     Toast.makeText(this, getString(R.string.toast_generate_successful), Toast.LENGTH_SHORT).show();
                 },
                 error -> {
@@ -108,6 +118,59 @@ public class MainActivity extends AppCompatActivity {
 
     private long getToDate() {
         return System.currentTimeMillis() / 1000L; // conversion to Unix timestamp
+    }
+
+    /**
+     * Fetches the cover art for this album from the Last.fm API and downloads it to internal storage.
+     *
+     * @param album the album to get the cover art for
+     */
+    private void fetchCoverArt(Album album) {
+        String albumInfoUrl = ApiStringBuilder.buildGetAlbumInfoUrl(album);
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(albumInfoUrl, null, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                try {
+                    JSONArray imageUrls = response.getJSONObject("album").getJSONArray("image");
+                    JSONObject largestImageObject = imageUrls.getJSONObject(imageUrls.length()-1);
+                    String largestImageUrl = largestImageObject.getString("#text");
+                    ImageRequest imageRequest = new ImageRequest(largestImageUrl, new Response.Listener<Bitmap>() {
+                        @Override
+                        public void onResponse(Bitmap response) {
+                            // save response to internal storage
+                            // TODO: implement
+                        }
+                    }, 0, 0, null, null, new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            // TODO: implement
+                        }
+                    });
+                    queue.add(imageRequest);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    // TODO: implement
+                }
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                // TODO: implement
+            }
+        });
+        queue.add(jsonObjectRequest);
+    }
+
+    /**
+     * Returns the album chart as a Drawable.
+     *
+     * @param chartObject
+     * @return
+     */
+    private Drawable generateChartDrawable(AlbumChart chartObject) {
+        // TODO: implement
+        return null;
     }
 
 }

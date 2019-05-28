@@ -11,9 +11,8 @@ public class AlbumChart {
         private List<Album> album;
     }
 
-    public Drawable generateDrawable() {
-        // TODO: implement generateDrawable()
-        return null;
+    public List<Album> getAlbums() {
+        return weeklyalbumchart.album;
     }
 
 }

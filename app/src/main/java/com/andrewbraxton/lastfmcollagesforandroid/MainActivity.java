@@ -32,6 +32,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final String CLICK_TAG = "ButtonClicked";
@@ -48,6 +53,11 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         queue = Volley.newRequestQueue(this);
+
+        File coverArtDir = new File(getFilesDir(), "coverart");
+        File collageDir = new File(getFilesDir(), "collage");
+        coverArtDir.mkdir();
+        collageDir.mkdir();
     }
 
     @Override
@@ -124,35 +134,36 @@ public class MainActivity extends AppCompatActivity {
      * Fetches the cover art for this album from the Last.fm API and downloads it to internal storage.
      *
      * @param album the album to get the cover art for
+     * @param filename the name that the downloaded file will have
      */
-    private void fetchCoverArt(Album album) {
+    private void fetchCoverArt(Album album, String filename) {
         String albumInfoUrl = ApiStringBuilder.buildGetAlbumInfoUrl(album);
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(albumInfoUrl, null, new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject response) {
-                try {
-                    JSONArray imageUrls = response.getJSONObject("album").getJSONArray("image");
-                    JSONObject largestImageObject = imageUrls.getJSONObject(imageUrls.length()-1);
-                    String largestImageUrl = largestImageObject.getString("#text");
-                    ImageRequest imageRequest = new ImageRequest(largestImageUrl, new Response.Listener<Bitmap>() {
-                        @Override
-                        public void onResponse(Bitmap response) {
-                            // save response to internal storage
-                            // TODO: implement
-                        }
-                    }, 0, 0, null, null, new Response.ErrorListener() {
-                        @Override
-                        public void onErrorResponse(VolleyError error) {
-                            // TODO: implement
-                        }
-                    });
-                    queue.add(imageRequest);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    // TODO: implement
-                }
-
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(albumInfoUrl, null, response -> {
+            try {
+                JSONArray imageUrls = response.getJSONObject("album").getJSONArray("image");
+                JSONObject largestImageObject = imageUrls.getJSONObject(imageUrls.length()-1);
+                String largestImageUrl = largestImageObject.getString("#text");
+                ImageRequest imageRequest = new ImageRequest(largestImageUrl, bitmap -> {
+                    try {
+                        File imageFile = new File(getCoverArtDir(), filename);
+                        OutputStream fOutStream = new FileOutputStream(imageFile);
+                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, fOutStream);
+                        fOutStream.close();
+                    } catch (Exception e) {
+                        // TODO: implement
+                    }
+                }, 0, 0, null, null, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: implement
+                    }
+                });
+                queue.add(imageRequest);
+            } catch (JSONException e) {
+                e.printStackTrace();
+                // TODO: implement
             }
+
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
@@ -171,6 +182,14 @@ public class MainActivity extends AppCompatActivity {
     private Drawable generateChartDrawable(AlbumChart chartObject) {
         // TODO: implement
         return null;
+    }
+
+    private File getCoverArtDir() {
+        return new File(getFilesDir(), "coverart");
+    }
+
+    private File getCollageDir() {
+        return new File(getFilesDir(), "collage");
     }
 
 }

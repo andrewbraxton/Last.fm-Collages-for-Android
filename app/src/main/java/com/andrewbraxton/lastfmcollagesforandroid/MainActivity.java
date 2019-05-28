@@ -192,4 +192,17 @@ public class MainActivity extends AppCompatActivity {
         return new File(getFilesDir(), "collage");
     }
 
+    private void clearCoverArtDir() {
+        for (File coverArt: getCoverArtDir().listFiles()) {
+            coverArt.delete();
+        }
+    }
+
+    private void clearCollageDir() {
+        for (File collage: getCollageDir().listFiles()) {
+            collage.delete();
+        }
+    }
+
+
 }

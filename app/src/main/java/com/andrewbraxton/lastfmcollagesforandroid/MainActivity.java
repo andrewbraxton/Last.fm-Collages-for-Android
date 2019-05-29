@@ -2,7 +2,9 @@ package com.andrewbraxton.lastfmcollagesforandroid;
 
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -39,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
 
     // TODO: Javadoc
     // TODO: better logging
+    // TODO: write a save image method
 
     private static final String LOG_TAG = "MainActivityTag";
 
@@ -81,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (username.isEmpty()) {
             Toast.makeText(this, getString(R.string.toast_no_username), Toast.LENGTH_SHORT).show();
+            Log.i(LOG_TAG,"Generate error: no username");
             return;
         }
 
@@ -91,8 +95,10 @@ public class MainActivity extends AppCompatActivity {
                     response = response.replace("#", ""); // removing the pound signs in Last.fm's JSON keys
                     AlbumChart chartObject = gson.fromJson(response, AlbumChart.class);
                     ImageView chartImage = findViewById(R.id.chartImage);
-                    chartImage.setImageDrawable(generateChartDrawable(chartObject, collageSize));
+                    chartImage.setImageBitmap(generateChartBitmap(chartObject, collageSize));
                     Toast.makeText(this, getString(R.string.toast_generate_successful), Toast.LENGTH_SHORT).show();
+
+                    Log.i(LOG_TAG,"Generate success");
                 },
                 error -> {
                     String errorMessage = getString(R.string.toast_network_error);
@@ -100,6 +106,8 @@ public class MainActivity extends AppCompatActivity {
                         errorMessage = getString(R.string.toast_invalid_username);
                     }
                     Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show();
+
+                    Log.d(LOG_TAG,"Generate error: " + errorMessage);
                 }
         );
         queue.add(stringRequest);
@@ -188,7 +196,7 @@ public class MainActivity extends AppCompatActivity {
         queue.add(jsonObjectRequest);
     }
 
-    private Drawable generateChartDrawable(AlbumChart chartObject, int collageSize) {
+    private Bitmap generateChartBitmap(AlbumChart chartObject, int collageSize) {
         clearCoverArtDir();
         List<Album> albums = chartObject.getAlbums();
         int numAlbums = collageSize * collageSize;
@@ -196,8 +204,37 @@ public class MainActivity extends AppCompatActivity {
             fetchCoverArt(albums.get(i), i + ".png");
         }
 
-        // TODO: implement collage generation
-        return null;
+        // set up black canvas to draw on
+        int dimension = 300 * collageSize;
+        Bitmap collage = Bitmap.createBitmap(dimension, dimension, Bitmap.Config.ARGB_8888);
+        collage.eraseColor(Color.BLACK);
+        Canvas canvas = new Canvas(collage);
+
+        // draw the cover arts onto the canvas
+        int x = 0;
+        int y = 0;
+        for (int i = 0; i < numAlbums; i++) {
+            x = (i % collageSize) * 300;
+            if (i > 0 && i % collageSize == 0) {
+                y += 300;
+            }
+            String filename = i + ".png";
+            File coverArtFile = new File(getCoverArtDir(), filename);
+            if (coverArtFile.exists()) {
+                Bitmap coverArt = BitmapFactory.decodeFile(coverArtFile.getAbsolutePath());
+                canvas.drawBitmap(coverArt, x, y, null);
+            }
+        }
+
+        // save collage to internal storage
+        try {
+            File imageFile = new File(getCollageDir(), "collage.png");
+            OutputStream fOutStream = new FileOutputStream(imageFile);
+            collage.compress(Bitmap.CompressFormat.PNG, 100, fOutStream);
+            fOutStream.close();
+        } catch (Exception e) {}
+
+        return collage;
     }
 
     /** Returns the directory in internal storage where album cover arts are stored. */

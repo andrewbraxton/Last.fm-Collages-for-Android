@@ -42,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
     // TODO: Javadoc
     // TODO: better logging
     // TODO: write a save image method
+    // TODO: pull out constants (png, 300)
 
     private static final String LOG_TAG = "MainActivityTag";
 
@@ -74,6 +75,7 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    // TODO: redesign this so that the ImageView updates cover arts progressively
     public void generateButtonClicked(View v) {
         Log.i(LOG_TAG, "Generate button clicked");
 
@@ -197,7 +199,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private Bitmap generateChartBitmap(AlbumChart chartObject, int collageSize) {
-        clearCoverArtDir();
+        //clearCoverArtDir();
         List<Album> albums = chartObject.getAlbums();
         int numAlbums = collageSize * collageSize;
         for (int i = 0; i < numAlbums; i++) {

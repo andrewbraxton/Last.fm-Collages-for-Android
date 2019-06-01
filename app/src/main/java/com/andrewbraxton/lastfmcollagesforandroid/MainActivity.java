@@ -94,7 +94,6 @@ public class MainActivity extends AppCompatActivity {
     public void shareButtonClicked(MenuItem v) {
         Log.i(LOG_TAG, "Share button clicked");
         // TODO: implement
-
     }
 
     public void downloadButtonClicked(MenuItem v) {
@@ -108,15 +107,13 @@ public class MainActivity extends AppCompatActivity {
         clearCollageDir();
 
         int collageSize = getCollageSize();
-        Bitmap collage = getBlackBitmap(collageSize);
+        Bitmap collage = getBlackBitmap(COVERART_SIZE*collageSize);
         Canvas canvas = new Canvas(collage);
 
         // draw all cover art onto the canvas
-        int x;
-        int y;
         for (int i = 0; i < collageSize * collageSize; i++) {
-            x = (i % collageSize) * COVERART_SIZE;
-            y = (i / collageSize) * COVERART_SIZE;
+            int x = (i % collageSize) * COVERART_SIZE;
+            int y = (i / collageSize) * COVERART_SIZE;
             File coverArtFile = new File(getCoverArtDir(), i + PNG);
             if (coverArtFile.exists()) {
                 Bitmap coverArt = BitmapFactory.decodeFile(coverArtFile.getAbsolutePath());
@@ -142,7 +139,7 @@ public class MainActivity extends AppCompatActivity {
 
                     List<Album> albums = getChartAlbums(jsonResponse, collageSize);
                     for (int i = 0; i < albums.size(); i++) {
-                        fetchCoverArt(albums.get(i), i + ".png");
+                        fetchCoverArt(albums.get(i), i + PNG);
                     }
                 },
                 error -> {
@@ -172,12 +169,13 @@ public class MainActivity extends AppCompatActivity {
                 ApiStringBuilder.buildGetAlbumInfoUrl(album),
                 null,
                 albumInfo -> {
+                    File saveLocation = new File(getCoverArtDir(), filename);
                     try {
                         ImageRequest imageRequest = new ImageRequest(
                                 getLargestImageUrl(albumInfo),
                                 coverArt -> {
                                     Log.d(LOG_TAG, "Fetch success: " + album);
-                                    saveBitmap(new File(getCoverArtDir(), filename), coverArt);
+                                    saveBitmap(saveLocation, coverArt);
                                 },
                                 0, 0, null, null,
                                 error -> {
@@ -186,6 +184,8 @@ public class MainActivity extends AppCompatActivity {
                         queue.add(imageRequest);
                     } catch (JSONException e) {
                         Log.e(LOG_TAG, "Fetch error (No cover art found): " + album);
+                        saveBitmap(saveLocation, getBlackBitmap(COVERART_SIZE));
+                        // TODO: better handling of no cover art
                     }
                 },
                 error -> {
@@ -219,8 +219,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private Bitmap getBlackBitmap(int collageSize) {
-        int size = COVERART_SIZE * collageSize;
+    private Bitmap getBlackBitmap(int size) {
         Bitmap blackBmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
         blackBmp.eraseColor(Color.BLACK);
         return blackBmp;

@@ -5,6 +5,9 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+/**
+ * The settings screen of the app. Contains the PreferencesFragment.
+ */
 public class SettingsActivity extends AppCompatActivity {
 
     @Override

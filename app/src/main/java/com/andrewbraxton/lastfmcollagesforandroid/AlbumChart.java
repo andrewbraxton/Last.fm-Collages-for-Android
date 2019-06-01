@@ -1,10 +1,12 @@
 package com.andrewbraxton.lastfmcollagesforandroid;
 
-import android.graphics.drawable.Drawable;
-
 import java.util.List;
 
+/**
+ * Represents the JSON object returned by a call to user.getWeeklyAlbumChart. For use with Gson's fromJson().
+ */
 public class AlbumChart {
+
     private WeeklyAlbumChart weeklyalbumchart;
 
     private class WeeklyAlbumChart {

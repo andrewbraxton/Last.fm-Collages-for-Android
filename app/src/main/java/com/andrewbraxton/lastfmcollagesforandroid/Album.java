@@ -1,5 +1,12 @@
 package com.andrewbraxton.lastfmcollagesforandroid;
 
+/**
+ * Represents an album JSON object returned as part of a call to user.getWeeklyAlbumChart. For use with Gson's
+ * fromJson().
+ * <p>
+ * Note: NOT for use to represent the album JSON object returned by call to album.getInfo (that object is structured
+ * differently).
+ */
 public class Album {
 
     private Artist artist;
@@ -36,4 +43,5 @@ public class Album {
     public String getUrl() {
         return url;
     }
+
 }

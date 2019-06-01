@@ -23,7 +23,7 @@ public final class ApiStringBuilder {
     public static final String API_KEY = "";
     public static final String API_SECRET = "";
 
-    public static String buildGetAlbumChartUrl(String user, long fromDate, long toDate) {
+    public static final String buildGetAlbumChartUrl(String user, long fromDate, long toDate) {
         String url = BASE_URL + METHOD + USER_GET_CHART;
         url += PARAM_APIKEY + API_KEY;
         url += PARAM_USER + user;
@@ -32,7 +32,8 @@ public final class ApiStringBuilder {
         return url;
     }
 
-    public static String buildGetAlbumInfoUrl(Album album) {
+    public static final String buildGetAlbumInfoUrl(Album album) {
+        // TODO: look into MBID weirdness
         String url = BASE_URL + METHOD + ALBUM_GET_INFO;
         url += PARAM_APIKEY + API_KEY;
         url += PARAM_ARTIST + album.getArtistName() + PARAM_ALBUM + album.getName();

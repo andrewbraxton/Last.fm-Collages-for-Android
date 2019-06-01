@@ -22,7 +22,7 @@
             android:defaultValue="7"
             android:entries="@array/collage_range_names_array"
             android:entryValues="@array/collage_range_values_array"
-            android:key="@string/key_pref_date_range"
+            android:key="@string/key_pref_num_days"
             android:title="@string/title_pref_date_range"
             app:iconSpaceReserved="false" />
     </PreferenceCategory>

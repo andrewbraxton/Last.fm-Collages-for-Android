@@ -44,8 +44,9 @@ public class MainActivity extends AppCompatActivity {
 
     // TODO: app icon
     // TODO: persistent collage ImageView
-    // TODO: look into problem with album names containing ampersands, ñ, etc.
+    // TODO: look into problem with album names containing ampersands, ñ, etc. (MBID solution?)
     // TODO: notifications
+    // TODO: progress indicator when pressing generate button
 
     private static final String LOG_TAG = "MainActivityTag";
 
@@ -64,6 +65,8 @@ public class MainActivity extends AppCompatActivity {
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.i(LOG_TAG, "MainActivity entered Created state");
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -97,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Click listener for the settings button. Simply launches the settings activity.
+     * Click listener for the Settings button. Simply launches the settings activity.
      */
     public void settingsButtonClicked(MenuItem v) {
         Log.i(LOG_TAG, "Settings button clicked");
@@ -140,11 +143,14 @@ public class MainActivity extends AppCompatActivity {
                 error -> {
                     String errorMessage;
                     if (error instanceof ClientError) {
-                        Log.d(LOG_TAG, "StringRequest error: Invalid username");
+                        Log.e(LOG_TAG, "StringRequest error: Invalid username");
                         errorMessage = getString(R.string.toast_invalid_username);
+                    } else if (error.networkResponse == null) {
+                        Log.e(LOG_TAG, "StringRequest error: Device couldn't connect to network");
+                        errorMessage = getString(R.string.toast_device_network_error);
                     } else {
-                        Log.d(LOG_TAG, "StringRequest error: Network error");
-                        errorMessage = getString(R.string.toast_network_error);
+                        Log.e(LOG_TAG, "StringRequest error: Last.fm API down");
+                        errorMessage = getString(R.string.toast_api_error);
                     }
                     Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show();
                 }
@@ -173,26 +179,33 @@ public class MainActivity extends AppCompatActivity {
                                     Log.d(LOG_TAG, "Fetch success: " + album);
 
                                     saveCoverArt(saveLocation, coverArt);
-                                    displayCollageIfReady();
+                                    if (doneFetchingCoverArt()) {
+                                        displayCollage();
+                                    }
                                 },
                                 0, 0, null, null,
                                 error -> {
-                                    // TODO: improve
+                                    // TODO: improve (MBID solution?)
                                     Log.e(LOG_TAG, "Fetch error (ImageRequest):  " + album);
 
                                     saveCoverArt(saveLocation, null);
-                                    displayCollageIfReady();
+                                    if (doneFetchingCoverArt()) {
+                                        displayCollage();
+                                    }
                                 });
                         queue.add(imageRequest);
                     } catch (JSONException e) {
                         Log.e(LOG_TAG, "Fetch error (No cover art found): " + album);
 
                         saveCoverArt(saveLocation, null);
-                        displayCollageIfReady();
+                        if (doneFetchingCoverArt()) {
+                            displayCollage();
+                        }
                     }
                 },
                 error -> {
                     Log.e(LOG_TAG, "Fetch error (JsonRequest Error): " + album);
+                    // TODO: look into this
                 });
         queue.add(jsonObjectRequest);
     }
@@ -225,16 +238,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Calls createCollageBitmap() and displays the result only if all cover art has been fetched.
+     * Calls createCollageBitmap() and displays the result on screen.
      */
-    private void displayCollageIfReady() {
-        if (doneFetchingCoverArt()) {
-            ImageView collageImage = findViewById(R.id.collageImageView);
-            collageImage.setImageBitmap(createCollageBitmap());
-            Toast.makeText(this, R.string.toast_generate_successful, Toast.LENGTH_SHORT).show();
+    private void displayCollage() {
+        ImageView collageImage = findViewById(R.id.collageImageView);
+        collageImage.setImageBitmap(createCollageBitmap());
+        Toast.makeText(this, R.string.toast_generate_successful, Toast.LENGTH_SHORT).show();
 
-            Log.i(LOG_TAG, "Collage displayed");
-        }
+        Log.i(LOG_TAG, "Collage displayed");
     }
 
     private void saveCoverArt(File saveLocation, Bitmap coverArt) {

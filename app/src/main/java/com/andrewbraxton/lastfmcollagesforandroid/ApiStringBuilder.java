@@ -6,6 +6,7 @@ package com.andrewbraxton.lastfmcollagesforandroid;
  * Enter your unique API key and secret into their respective fields before use.
  */
 public final class ApiStringBuilder {
+    // TODO: Javadoc
 
     public static final String BASE_URL = "https://ws.audioscrobbler.com/2.0/";
     public static final String METHOD = "?method=";

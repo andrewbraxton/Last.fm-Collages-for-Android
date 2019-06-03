@@ -42,11 +42,10 @@ import java.util.List;
  */
 public class MainActivity extends AppCompatActivity {
 
-    // TODO: app icon
-    // TODO: persistent collage ImageView
-    // TODO: look into problem with album names containing ampersands, ñ, etc. (MBID solution?)
-    // TODO: notifications
     // TODO: progress indicator when pressing generate button
+    // TODO: look into problem with album names containing ampersands, ñ, etc. (MBID solution?)
+    // TODO: app icon
+    // TODO: notifications
 
     private static final String LOG_TAG = "MainActivityTag";
 
@@ -55,30 +54,30 @@ public class MainActivity extends AppCompatActivity {
     private static final String COLLAGE = "collage";
     public static final String PNG = ".png";
 
+    private ImageView collageView;
     private RequestQueue queue;
     private final Gson gson = new Gson();
 
-    // Public functions called by Android system.
+    // Functions called by Android system.
 
     /**
-     * Initializes the Volley request queue and creates cover art and collage directories in internal storage.
+     * Initializes the Volley request queue and creates empty cover art and collage directories in internal storage.
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.i(LOG_TAG, "MainActivity entered Created state");
-
         super.onCreate(savedInstanceState);
+        Log.i(LOG_TAG, "onCreate() called");
+
         setContentView(R.layout.activity_main);
+        setSupportActionBar(findViewById(R.id.main_toolbar));
 
-        Toolbar toolbar = findViewById(R.id.main_toolbar);
-        setSupportActionBar(toolbar);
-
+        collageView = findViewById(R.id.collageImageView);
         queue = Volley.newRequestQueue(this);
 
-        File coverArtDir = new File(getFilesDir(), COVERART);
-        File collageDir = new File(getFilesDir(), COLLAGE);
-        coverArtDir.mkdir();
-        collageDir.mkdir();
+        getCoverArtDir().mkdir();
+        getCollageDir().mkdir();
+        clearCoverArtDir();
+        clearCollageDir();
     }
 
     /**
@@ -88,6 +87,20 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu, menu);
         return true;
+    }
+
+    /**
+     * Displays the most recently created collage if one exists.
+     */
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.i(LOG_TAG, "onResume() called");
+
+        File collageFile = new File(getCollageDir(), COLLAGE + PNG);
+        if (collageFile.exists()) {
+            displayCollage(BitmapFactory.decodeFile(collageFile.getAbsolutePath()));
+        }
     }
 
     /**
@@ -141,18 +154,18 @@ public class MainActivity extends AppCompatActivity {
                     }
                 },
                 error -> {
-                    String errorMessage;
+                    int errorMessageId;
                     if (error instanceof ClientError) {
                         Log.e(LOG_TAG, "StringRequest error: Invalid username");
-                        errorMessage = getString(R.string.toast_invalid_username);
+                        errorMessageId = R.string.toast_invalid_username;
                     } else if (error.networkResponse == null) {
                         Log.e(LOG_TAG, "StringRequest error: Device couldn't connect to network");
-                        errorMessage = getString(R.string.toast_device_network_error);
+                        errorMessageId = R.string.toast_device_network_error;
                     } else {
                         Log.e(LOG_TAG, "StringRequest error: Last.fm API down");
-                        errorMessage = getString(R.string.toast_api_error);
+                        errorMessageId = R.string.toast_api_error;
                     }
-                    Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show();
+                    showToast(errorMessageId);
                 }
         );
         queue.add(chartRequest);
@@ -180,7 +193,8 @@ public class MainActivity extends AppCompatActivity {
 
                                     saveCoverArt(saveLocation, coverArt);
                                     if (doneFetchingCoverArt()) {
-                                        displayCollage();
+                                        displayCollage(createCollageBitmap());
+                                        showToast(R.string.toast_generate_successful);
                                     }
                                 },
                                 0, 0, null, null,
@@ -190,7 +204,8 @@ public class MainActivity extends AppCompatActivity {
 
                                     saveCoverArt(saveLocation, null);
                                     if (doneFetchingCoverArt()) {
-                                        displayCollage();
+                                        displayCollage(createCollageBitmap());
+                                        showToast(R.string.toast_generate_successful);
                                     }
                                 });
                         queue.add(imageRequest);
@@ -199,7 +214,8 @@ public class MainActivity extends AppCompatActivity {
 
                         saveCoverArt(saveLocation, null);
                         if (doneFetchingCoverArt()) {
-                            displayCollage();
+                            displayCollage(createCollageBitmap());
+                            showToast(R.string.toast_generate_successful);
                         }
                     }
                 },
@@ -238,16 +254,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Calls createCollageBitmap() and displays the result on screen.
+     * Displays the collage on screen.
+     *
+     * @param collage the collage to display
      */
-    private void displayCollage() {
-        ImageView collageImage = findViewById(R.id.collageImageView);
-        collageImage.setImageBitmap(createCollageBitmap());
-        Toast.makeText(this, R.string.toast_generate_successful, Toast.LENGTH_SHORT).show();
+    private void displayCollage(Bitmap collage) {
+        collageView.setImageBitmap(collage);
 
         Log.i(LOG_TAG, "Collage displayed");
     }
 
+    // TODO: Javadoc
     private void saveCoverArt(File saveLocation, Bitmap coverArt) {
         // TODO: improve
         if (coverArt == null) {
@@ -316,6 +333,15 @@ public class MainActivity extends AppCompatActivity {
     private boolean doneFetchingCoverArt() {
         // TODO: handle user not having enough albums
         return getCoverArtDir().listFiles().length == getCollageSize() * getCollageSize();
+    }
+
+    /**
+     * Shortcut for displaying a toast.
+     *
+     * @param resId the resource id of the message to display
+     */
+    private void showToast(int resId) {
+        Toast.makeText(this, resId, Toast.LENGTH_SHORT).show();
     }
 
     /**

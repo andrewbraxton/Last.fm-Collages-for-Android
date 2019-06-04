@@ -111,6 +111,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
+     * Calls saveCollageToExternalStorage() if the permission was granted.
+     */
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            Log.i(LOG_TAG, "Write permission granted");
+            saveCollageToExternalStorage();
+        } else {
+            Log.i(LOG_TAG, "Write permission denied");
+            showToast(R.string.toast_save_error_permission);
+        }
+    }
+
+    /**
      * Click listener for Generate button. Simply calls generateCollage().
      */
     public void generateButtonClicked(View v) {
@@ -138,59 +152,18 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // TODO: Javadoc
+    /**
+     * Click listener for the Save menu item. Requests the permission to write to external storage if needed or calls
+     * saveCollageToExternalStorage() if the permission has already been granted.
+     */
     public void saveButtonClicked(MenuItem v) {
         Log.i(LOG_TAG, "Download button clicked");
 
-        if(havePermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+        if (havePermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
             saveCollageToExternalStorage();
         } else {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
         }
-    }
-
-    // TODO: Javadoc
-    private void saveCollageToExternalStorage() {
-        File collageFile = getCollageFile();
-        if (collageFile.exists()) {
-            if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-                Bitmap collage = BitmapFactory.decodeFile(collageFile.getAbsolutePath());
-                File saveLocation = new File(getPublicCollageDir(), COLLAGE+getToDate()+PNG);
-                saveBitmap(saveLocation, collage);
-                showToast(R.string.toast_save_successful);
-            } else {
-                Log.e(LOG_TAG, "Device not allowing file saving");
-                showToast(R.string.toast_save_error_device);
-            }
-        } else {
-            Log.d(LOG_TAG, "No collage to save");
-            showToast(R.string.toast_save_invalid);
-        }
-    }
-
-    // TODO: Javadoc
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            Log.i(LOG_TAG, "Write permission granted");
-            saveCollageToExternalStorage();
-        } else {
-            Log.i(LOG_TAG, "Write permission denied");
-            showToast(R.string.toast_save_error_permission);
-        }
-    }
-
-    // TODO: Javadoc
-    private File getPublicCollageDir() {
-        File picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-        File collageDir = new File(picturesDir, getString(R.string.app_name));
-        collageDir.mkdirs();
-        return collageDir;
-    }
-
-    // TODO: Javadoc
-    private boolean havePermission(String permission) {
-        return ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED;
     }
 
     /**
@@ -459,6 +432,35 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
+     * @param permission the name of the permission being checked
+     * @return true if the permission has been granted, false if not
+     */
+    private boolean havePermission(String permission) {
+        return ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    /**
+     * Copies the collage bitmap saved in internal storage (if it exists) to the app's external storage directory.
+     */
+    private void saveCollageToExternalStorage() {
+        File collageFile = getCollageFile();
+        if (collageFile.exists()) {
+            if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+                Bitmap collage = BitmapFactory.decodeFile(collageFile.getAbsolutePath());
+                File saveLocation = new File(getPublicCollageDir(), COLLAGE + getToDate() + PNG);
+                saveBitmap(saveLocation, collage);
+                showToast(R.string.toast_save_successful);
+            } else {
+                Log.e(LOG_TAG, "Device not allowing file saving");
+                showToast(R.string.toast_save_error_device);
+            }
+        } else {
+            Log.d(LOG_TAG, "No collage to save");
+            showToast(R.string.toast_save_invalid);
+        }
+    }
+
+    /**
      * @return the file in internal storage where the most recently generated collage is stored
      */
     private File getCollageFile() {
@@ -477,6 +479,16 @@ public class MainActivity extends AppCompatActivity {
      */
     private File getCollageDir() {
         return new File(getFilesDir(), COLLAGE);
+    }
+
+    /**
+     * @return the directory for saving collages in external storage
+     */
+    private File getPublicCollageDir() {
+        File picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        File collageDir = new File(picturesDir, getString(R.string.app_name));
+        collageDir.mkdirs();
+        return collageDir;
     }
 
     /**

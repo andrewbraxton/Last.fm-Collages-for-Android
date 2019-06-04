@@ -1,17 +1,22 @@
 package com.andrewbraxton.lastfmcollagesforandroid;
 
+import android.Manifest;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.content.Intent;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
 import android.view.Menu;
@@ -129,14 +134,63 @@ public class MainActivity extends AppCompatActivity {
             shareIntent.setType("image/png");
             startActivity(Intent.createChooser(shareIntent, getString(R.string.menu_share_title)));
         } else {
-            showToast(R.string.toast_invalid_share);
+            showToast(R.string.toast_share_invalid);
         }
     }
 
     // TODO: Javadoc
-    public void downloadButtonClicked(MenuItem v) {
+    public void saveButtonClicked(MenuItem v) {
         Log.i(LOG_TAG, "Download button clicked");
-        // TODO: implement
+
+        if(havePermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+            saveCollageToExternalStorage();
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
+        }
+    }
+
+    // TODO: Javadoc
+    private void saveCollageToExternalStorage() {
+        File collageFile = getCollageFile();
+        if (collageFile.exists()) {
+            if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+                Bitmap collage = BitmapFactory.decodeFile(collageFile.getAbsolutePath());
+                File saveLocation = new File(getPublicCollageDir(), COLLAGE+getToDate()+PNG);
+                saveBitmap(saveLocation, collage);
+                showToast(R.string.toast_save_successful);
+            } else {
+                Log.e(LOG_TAG, "Device not allowing file saving");
+                showToast(R.string.toast_save_error_device);
+            }
+        } else {
+            Log.d(LOG_TAG, "No collage to save");
+            showToast(R.string.toast_save_invalid);
+        }
+    }
+
+    // TODO: Javadoc
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            Log.i(LOG_TAG, "Write permission granted");
+            saveCollageToExternalStorage();
+        } else {
+            Log.i(LOG_TAG, "Write permission denied");
+            showToast(R.string.toast_save_error_permission);
+        }
+    }
+
+    // TODO: Javadoc
+    private File getPublicCollageDir() {
+        File picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        File collageDir = new File(picturesDir, getString(R.string.app_name));
+        collageDir.mkdirs();
+        return collageDir;
+    }
+
+    // TODO: Javadoc
+    private boolean havePermission(String permission) {
+        return ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED;
     }
 
     /**
@@ -172,13 +226,13 @@ public class MainActivity extends AppCompatActivity {
                     int errorMessageId;
                     if (error instanceof ClientError) {
                         Log.e(LOG_TAG, "StringRequest error: Invalid username");
-                        errorMessageId = R.string.toast_invalid_username;
+                        errorMessageId = R.string.toast_username_invalid;
                     } else if (error.networkResponse == null) {
                         Log.e(LOG_TAG, "StringRequest error: Device couldn't connect to network");
-                        errorMessageId = R.string.toast_device_network_error;
+                        errorMessageId = R.string.toast_generate_error_network;
                     } else {
                         Log.e(LOG_TAG, "StringRequest error: Last.fm API down");
-                        errorMessageId = R.string.toast_api_error;
+                        errorMessageId = R.string.toast_generate_error_api;
                     }
                     showToast(errorMessageId);
                 }
@@ -300,9 +354,9 @@ public class MainActivity extends AppCompatActivity {
             OutputStream fOutStream = new FileOutputStream(saveLocation);
             bmp.compress(Bitmap.CompressFormat.PNG, 100, fOutStream);
             fOutStream.close();
-            Log.i(LOG_TAG, "Save success: " + saveLocation.getName());
+            Log.i(LOG_TAG, "Save success: " + saveLocation.getPath());
         } catch (IOException e) {
-            Log.e(LOG_TAG, "Save error (IOException): " + saveLocation.getName());
+            Log.e(LOG_TAG, "Save error (IOException): " + saveLocation.getPath());
             throw new RuntimeException(e);
         }
     }

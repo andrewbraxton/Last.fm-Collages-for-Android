@@ -9,10 +9,10 @@
         android:title="@string/menu_share_title"
         app:showAsAction="ifRoom" />
     <item
-        android:id="@+id/download"
+        android:id="@+id/save"
         android:icon="@android:drawable/stat_sys_download"
-        android:onClick="downloadButtonClicked"
-        android:title="@string/menu_download_title"
+        android:onClick="saveButtonClicked"
+        android:title="@string/menu_save_title"
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/settings"

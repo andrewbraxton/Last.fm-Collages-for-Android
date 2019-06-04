@@ -6,7 +6,6 @@ package com.andrewbraxton.lastfmcollagesforandroid;
  * Enter your unique API key and secret into their respective fields before use.
  */
 public final class ApiStringBuilder {
-    // TODO: Javadoc
 
     public static final String BASE_URL = "https://ws.audioscrobbler.com/2.0/";
     public static final String METHOD = "?method=";
@@ -24,6 +23,13 @@ public final class ApiStringBuilder {
     public static final String API_KEY = "";
     public static final String API_SECRET = "";
 
+    /**
+     * Returns the URL needed to make a call to user.getWeeklyAlbumChart.
+     *
+     * @param user     the Last.fm username to fetch the chart of
+     * @param fromDate the Unix timestamp of the date at which the chart should start from
+     * @param toDate   the Unix timestamp of the date at which the chart should end on
+     */
     public static final String buildGetAlbumChartUrl(String user, long fromDate, long toDate) {
         String url = BASE_URL + METHOD + USER_GET_CHART;
         url += PARAM_APIKEY + API_KEY;
@@ -33,6 +39,11 @@ public final class ApiStringBuilder {
         return url;
     }
 
+    /**
+     * Returns the URL needed to make a call to album.getAlbumInfo.
+     *
+     * @param album the album to fetch the info for
+     */
     public static final String buildGetAlbumInfoUrl(Album album) {
         // TODO: look into MBID weirdness
         String url = BASE_URL + METHOD + ALBUM_GET_INFO;

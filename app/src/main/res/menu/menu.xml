@@ -6,17 +6,17 @@
         android:id="@+id/share"
         android:icon="?android:attr/actionModeShareDrawable"
         android:onClick="shareButtonClicked"
-        android:title="@string/title_menu_share"
-        app:showAsAction="always" />
+        android:title="@string/menu_share_title"
+        app:showAsAction="ifRoom" />
     <item
         android:id="@+id/download"
         android:icon="@android:drawable/stat_sys_download"
         android:onClick="downloadButtonClicked"
-        android:title="@string/title_menu_download"
-        app:showAsAction="always" />
+        android:title="@string/menu_download_title"
+        app:showAsAction="ifRoom" />
     <item
         android:id="@+id/settings"
         android:onClick="settingsButtonClicked"
-        android:title="@string/title_menu_settings"
+        android:title="@string/menu_settings_title"
         app:showAsAction="never" />
 </menu>

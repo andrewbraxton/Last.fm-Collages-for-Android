@@ -3,27 +3,27 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <PreferenceCategory
-        android:title="@string/title_collage_pref"
+        android:title="@string/pref_collage_category_title"
         app:iconSpaceReserved="false">
         <EditTextPreference
             android:key="@string/key_pref_username"
             android:selectAllOnFocus="true"
             android:singleLine="true"
-            android:title="@string/title_pref_username"
+            android:title="@string/pref_username_title"
             app:iconSpaceReserved="false" />
         <ListPreference
             android:defaultValue="3"
             android:entries="@array/collage_size_names_array"
             android:entryValues="@array/collage_size_values_array"
             android:key="@string/key_pref_size"
-            android:title="@string/title_pref_size"
+            android:title="@string/pref_size_title"
             app:iconSpaceReserved="false" />
         <ListPreference
             android:defaultValue="7"
             android:entries="@array/collage_range_names_array"
             android:entryValues="@array/collage_range_values_array"
             android:key="@string/key_pref_num_days"
-            android:title="@string/title_pref_date_range"
+            android:title="@string/pref_date_range_title"
             app:iconSpaceReserved="false" />
     </PreferenceCategory>
 

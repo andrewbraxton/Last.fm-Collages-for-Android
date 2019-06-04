@@ -5,13 +5,14 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.content.Intent;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.FileProvider;
 
 import android.view.Menu;
 import android.view.MenuItem;
@@ -48,11 +49,12 @@ public class MainActivity extends AppCompatActivity {
     // TODO: notifications
 
     private static final String LOG_TAG = "MainActivityTag";
+    private static final String FILEPROVIDER_AUTHORITY = "com.andrewbraxton.lastfmcollagesforandroid.fileprovider";
 
-    public static final int COVERART_SIZE = 300; // length/width in pixels of the largest cover art returned by API
+    private static final int COVERART_SIZE = 300; // length/width in pixels of the largest cover art returned by API
     private static final String COVERART = "coverart";
     private static final String COLLAGE = "collage";
-    public static final String PNG = ".png";
+    private static final String PNG = ".png";
 
     private ImageView collageView;
     private RequestQueue queue;
@@ -97,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         Log.i(LOG_TAG, "onResume() called");
 
-        File collageFile = new File(getCollageDir(), COLLAGE + PNG);
+        File collageFile = getCollageFile();
         if (collageFile.exists()) {
             displayCollage(BitmapFactory.decodeFile(collageFile.getAbsolutePath()));
         }
@@ -113,24 +115,37 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Click listener for the Settings button. Simply launches the settings activity.
+     * Click listener for the Share menu item. If a collage file exists in internal storage, an app chooser is launched
+     * to allow the user to share the collage.
+     */
+    public void shareButtonClicked(MenuItem v) {
+        Log.i(LOG_TAG, "Share button clicked");
+
+        File collageFile = getCollageFile();
+        if (collageFile.exists()) {
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            Uri collageUri = FileProvider.getUriForFile(this, FILEPROVIDER_AUTHORITY, collageFile);
+            shareIntent.putExtra(Intent.EXTRA_STREAM, collageUri);
+            shareIntent.setType("image/png");
+            startActivity(Intent.createChooser(shareIntent, getString(R.string.menu_share_title)));
+        } else {
+            showToast(R.string.toast_invalid_share);
+        }
+    }
+
+    // TODO: Javadoc
+    public void downloadButtonClicked(MenuItem v) {
+        Log.i(LOG_TAG, "Download button clicked");
+        // TODO: implement
+    }
+
+    /**
+     * Click listener for the Settings menu item. Simply launches the settings activity.
      */
     public void settingsButtonClicked(MenuItem v) {
         Log.i(LOG_TAG, "Settings button clicked");
 
         startActivity(new Intent(this, SettingsActivity.class));
-    }
-
-    // TODO: Javadoc
-    public void shareButtonClicked(MenuItem v) {
-        // TODO: implement
-        Log.i(LOG_TAG, "Share button clicked");
-    }
-
-    // TODO: Javadoc
-    public void downloadButtonClicked(MenuItem v) {
-        // TODO: implement
-        Log.i(LOG_TAG, "Download button clicked");
     }
 
     // Private functions.
@@ -249,7 +264,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        saveBitmap(new File(getCollageDir(), COLLAGE + PNG), collage);
+        saveBitmap(getCollageFile(), collage);
         return collage;
     }
 
@@ -359,21 +374,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * @return the number of days the collage spans chosen in settings
+     * @return the number of days the collage spans as chosen in settings
      */
     private int getNumDays() {
         return Integer.parseInt(getPrefs().getString(getString(R.string.key_pref_num_days), "7"));
     }
 
     /**
-     * @return the number of albums per row/column of the collage chosen in settings, e.g. returns 3 for a 3x3 collage
+     * @return the number of albums per row/column of the collage as chosen in settings, e.g. 3 for a 3x3 collage
      */
     private int getCollageSize() {
         return Integer.parseInt(getPrefs().getString(getString(R.string.key_pref_size), "3"));
     }
 
     /**
-     * @return the initial Unix timestamp for use in the "from" API parameter
+     * @return the Unix timestamp of the collage's begin date for use in the "from" API parameter
      */
     private long getFromDate() {
         if (getNumDays() == -1) { // "All-time" was selected in preferences
@@ -387,6 +402,13 @@ public class MainActivity extends AppCompatActivity {
      */
     private long getToDate() {
         return System.currentTimeMillis() / 1000L;
+    }
+
+    /**
+     * @return the file in internal storage where the most recently generated collage is stored
+     */
+    private File getCollageFile() {
+        return new File(getCollageDir(), COLLAGE + PNG);
     }
 
     /**
@@ -422,4 +444,5 @@ public class MainActivity extends AppCompatActivity {
         }
         Log.i(LOG_TAG, "Collage directory cleared");
     }
+
 }

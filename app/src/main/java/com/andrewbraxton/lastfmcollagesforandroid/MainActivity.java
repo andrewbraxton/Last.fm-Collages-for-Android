@@ -22,6 +22,7 @@ import androidx.core.content.FileProvider;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -62,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String PNG = ".png";
 
     private ImageView collageView;
+    private Button generateButton;
     private RequestQueue queue;
     private final Gson gson = new Gson();
 
@@ -79,6 +81,7 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(findViewById(R.id.main_toolbar));
 
         collageView = findViewById(R.id.collageImageView);
+        generateButton = findViewById(R.id.button_generate);
         queue = Volley.newRequestQueue(this);
 
         getCoverArtDir().mkdir();
@@ -184,6 +187,7 @@ public class MainActivity extends AppCompatActivity {
      */
     private void generateCollage() {
         clearCoverArtDir();
+        generateButton.setEnabled(false);
 
         StringRequest chartRequest = new StringRequest(
                 ApiStringBuilder.buildGetAlbumChartUrl(getUsername(), getFromDate(), getToDate()),
@@ -196,6 +200,7 @@ public class MainActivity extends AppCompatActivity {
                             fetchCoverArt(albums.get(i), i + PNG);
                         }
                     } else {
+                        generateButton.setEnabled(true);
                         showToast(R.string.toast_generate_invalid_numalbums);
                     }
                 },
@@ -211,6 +216,7 @@ public class MainActivity extends AppCompatActivity {
                         Log.e(LOG_TAG, "StringRequest error: Last.fm API down");
                         errorMessageId = R.string.toast_generate_error_api;
                     }
+                    generateButton.setEnabled(true);
                     showToast(errorMessageId);
                 }
         );
@@ -239,19 +245,17 @@ public class MainActivity extends AppCompatActivity {
 
                                     saveCoverArt(saveLocation, coverArt);
                                     if (doneFetchingCoverArt()) {
-                                        displayCollage(createCollageBitmap());
-                                        showToast(R.string.toast_generate_successful);
+                                        handleAllCoverArtFetched();
                                     }
                                 },
                                 0, 0, null, null,
                                 error -> {
-                                    // TODO: fix this; occurs when album has special character (MBID solution?)
+                                    // TODO: look into this; occurs when album has special character (MBID solution?)
                                     Log.e(LOG_TAG, "Fetch error (ImageRequest):  " + album);
 
                                     saveCoverArt(saveLocation, null);
                                     if (doneFetchingCoverArt()) {
-                                        displayCollage(createCollageBitmap());
-                                        showToast(R.string.toast_generate_successful);
+                                        handleAllCoverArtFetched();
                                     }
                                 });
                         queue.add(imageRequest);
@@ -260,8 +264,7 @@ public class MainActivity extends AppCompatActivity {
 
                         saveCoverArt(saveLocation, null);
                         if (doneFetchingCoverArt()) {
-                            displayCollage(createCollageBitmap());
-                            showToast(R.string.toast_generate_successful);
+                            handleAllCoverArtFetched();
                         }
                     }
                 },
@@ -384,6 +387,16 @@ public class MainActivity extends AppCompatActivity {
      */
     private boolean doneFetchingCoverArt() {
         return getCoverArtDir().listFiles().length == getCollageSize() * getCollageSize();
+    }
+
+    /**
+     * Should be called after checking that doneFetchingCoverArt() returns true. Creates and displays the collage from
+     * the downloaded cover art, re-enables the generate button, and shows a "successful generation" toast.
+     */
+    private void handleAllCoverArtFetched() {
+        displayCollage(createCollageBitmap());
+        generateButton.setEnabled(true);
+        showToast(R.string.toast_generate_successful);
     }
 
     /**

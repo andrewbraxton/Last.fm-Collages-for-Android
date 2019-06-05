@@ -3,19 +3,19 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:id="@+id/share"
+        android:id="@+id/menu_share"
         android:icon="?android:attr/actionModeShareDrawable"
         android:onClick="shareButtonClicked"
         android:title="@string/menu_share_title"
         app:showAsAction="ifRoom" />
     <item
-        android:id="@+id/save"
+        android:id="@+id/menu_save"
         android:icon="@android:drawable/stat_sys_download"
         android:onClick="saveButtonClicked"
         android:title="@string/menu_save_title"
         app:showAsAction="ifRoom" />
     <item
-        android:id="@+id/settings"
+        android:id="@+id/menu_settings"
         android:onClick="settingsButtonClicked"
         android:title="@string/menu_settings_title"
         app:showAsAction="never" />

@@ -50,8 +50,8 @@ import java.util.List;
  */
 public class MainActivity extends AppCompatActivity {
 
-    // TODO: progress indicator when pressing generate button
     // TODO: look into problem with album names containing ampersands, ñ, etc. (MBID solution?)
+    // TODO: placeholder collage image?
     // TODO: app icon
     // TODO: notifications
 
@@ -238,11 +238,11 @@ public class MainActivity extends AppCompatActivity {
      * @param filename the name that the downloaded file will have
      */
     private void fetchCoverArt(Album album, String filename) {
+        File saveLocation = new File(getCoverArtDir(), filename);
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
                 ApiStringBuilder.buildGetAlbumInfoUrl(album),
                 null,
                 albumInfo -> {
-                    File saveLocation = new File(getCoverArtDir(), filename);
                     try {
                         ImageRequest imageRequest = new ImageRequest(
                                 getLargestImageUrl(albumInfo),
@@ -275,9 +275,12 @@ public class MainActivity extends AppCompatActivity {
                     }
                 },
                 error -> {
-                    Log.e(LOG_TAG, "Fetch error (JsonRequest Error): " + album);
-                    // TODO: look into this
+                    // this error occurs randomly when the API decides to return a 405 error for no apparent reason
+                    // we just retry the request until it works
+                    Log.e(LOG_TAG, "Fetch error (JsonObjectRequest Error): " + album);
+                    fetchCoverArt(album, filename);
                 });
+
         queue.add(jsonObjectRequest);
     }
 

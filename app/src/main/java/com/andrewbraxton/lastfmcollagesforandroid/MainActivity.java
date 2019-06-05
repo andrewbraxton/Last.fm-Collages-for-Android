@@ -24,6 +24,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.android.volley.ClientError;
@@ -64,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
 
     private ImageView collageView;
     private Button generateButton;
+    private ProgressBar progressBar;
     private RequestQueue queue;
     private final Gson gson = new Gson();
 
@@ -82,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
 
         collageView = findViewById(R.id.collageImageView);
         generateButton = findViewById(R.id.button_generate);
+        progressBar = findViewById(R.id.progressBar);
         queue = Volley.newRequestQueue(this);
 
         getCoverArtDir().mkdir();
@@ -188,6 +191,7 @@ public class MainActivity extends AppCompatActivity {
     private void generateCollage() {
         clearCoverArtDir();
         generateButton.setEnabled(false);
+        progressBar.setVisibility(View.VISIBLE);
 
         StringRequest chartRequest = new StringRequest(
                 ApiStringBuilder.buildGetAlbumChartUrl(getUsername(), getFromDate(), getToDate()),
@@ -201,6 +205,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                     } else {
                         generateButton.setEnabled(true);
+                        progressBar.setVisibility(View.INVISIBLE);
                         showToast(R.string.toast_generate_invalid_numalbums);
                     }
                 },
@@ -217,6 +222,7 @@ public class MainActivity extends AppCompatActivity {
                         errorMessageId = R.string.toast_generate_error_api;
                     }
                     generateButton.setEnabled(true);
+                    progressBar.setVisibility(View.INVISIBLE);
                     showToast(errorMessageId);
                 }
         );
@@ -396,6 +402,7 @@ public class MainActivity extends AppCompatActivity {
     private void handleAllCoverArtFetched() {
         displayCollage(createCollageBitmap());
         generateButton.setEnabled(true);
+        progressBar.setVisibility(View.INVISIBLE);
         showToast(R.string.toast_generate_successful);
     }
 

@@ -31,7 +31,6 @@ import com.android.volley.ClientError;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.ImageRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.gson.Gson;
 
@@ -50,7 +49,7 @@ import java.util.List;
  */
 public class MainActivity extends AppCompatActivity {
 
-    // TODO: look into problem with album names containing ampersands, ñ, etc. (MBID solution?)
+    // TODO: look into problem with album names containing ampersands (maybe other characters? MBID solution?)
     // TODO: placeholder collage image?
     // TODO: app icon
     // TODO: notifications
@@ -193,12 +192,13 @@ public class MainActivity extends AppCompatActivity {
         generateButton.setEnabled(false);
         progressBar.setVisibility(View.VISIBLE);
 
-        StringRequest chartRequest = new StringRequest(
+        JsonObjectRequest chartRequest = new JsonObjectRequest(
                 ApiStringBuilder.buildGetAlbumChartUrl(getUsername(), getFromDate(), getToDate()),
-                rawChartJson -> {
+                null,
+                chartJsonObj -> {
                     Log.i(LOG_TAG, "Fetching cover art...");
 
-                    List<Album> albums = getChartAlbums(rawChartJson);
+                    List<Album> albums = parseChartAlbums(chartJsonObj);
                     if (albums != null) {
                         for (int i = 0; i < albums.size(); i++) {
                             fetchCoverArt(albums.get(i), i + PNG);
@@ -256,7 +256,6 @@ public class MainActivity extends AppCompatActivity {
                                 },
                                 0, 0, null, null,
                                 error -> {
-                                    // TODO: look into this; occurs when album has special character (MBID solution?)
                                     Log.e(LOG_TAG, "Fetch error (ImageRequest):  " + album);
 
                                     saveCoverArt(saveLocation, null);
@@ -276,8 +275,8 @@ public class MainActivity extends AppCompatActivity {
                 },
                 error -> {
                     // this error occurs randomly when the API decides to return a 405 error for no apparent reason
-                    // we just retry the request until it works
-                    Log.e(LOG_TAG, "Fetch error (JsonObjectRequest Error): " + album);
+                    // we just retry the request until the API cooperates
+                    Log.e(LOG_TAG, "Fetch error (HTTP 405 error): " + album);
                     fetchCoverArt(album, filename);
                 });
 
@@ -366,11 +365,10 @@ public class MainActivity extends AppCompatActivity {
      * returned by the call to user.getWeeklyAlbumChart if a 4x4 collage is selected. Returns null if the user doesn't
      * have enough albums to create a chart of the chosen size.
      *
-     * @param chartJson the raw JSON result of the call to user.getWeeklyAlbumChart
+     * @param chartJsonObj the JSONObject (not JsonObject) result of the call to user.getWeeklyAlbumChart
      */
-    private List<Album> getChartAlbums(String chartJson) {
-        chartJson = chartJson.replace("#", ""); // Removing the #s found in some of Last.fm's JSON keys
-        AlbumChart chart = gson.fromJson(chartJson, AlbumChart.class);
+    private List<Album> parseChartAlbums(JSONObject chartJsonObj) {
+        AlbumChart chart = gson.fromJson(chartJsonObj.toString(), AlbumChart.class);
         int numAlbumsInChart = getCollageSize() * getCollageSize();
         if (numAlbumsInChart > chart.getAlbums().size()) {
             return null;

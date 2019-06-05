@@ -1,10 +1,12 @@
 package com.andrewbraxton.lastfmcollagesforandroid;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  * Represents an album JSON object returned as part of a call to user.getWeeklyAlbumChart. For use with Gson's
  * fromJson().
  * <p>
- * Note: NOT for use to represent the album JSON object returned by call to album.getInfo (that object is structured
+ * Note: NOT intended to represent the album JSON object returned by call to album.getInfo (that object is structured
  * differently).
  */
 public class Album {
@@ -15,17 +17,13 @@ public class Album {
     private String url;
 
     private class Artist {
-        private String mbid;
+        @SerializedName("#text")
         private String text;
     }
 
     @Override
     public String toString() {
         return artist.text + " - " + name;
-    }
-
-    public String getArtistMbid() {
-        return artist.mbid;
     }
 
     public String getArtistName() {

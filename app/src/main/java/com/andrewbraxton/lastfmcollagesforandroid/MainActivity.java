@@ -180,7 +180,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Makes the initial API call to user.getWeeklyAlbumChart and then calls fetchCoverArt() for each album in the
      * collage. Much of the actual "generation" work is placed in fetchCoverArt() due to Volley's asynchronous task
-     * execution.
+     * execution. Also handles various problems at the initial generation phase (invalid username, API down, etc.).
      */
     private void generateCollage() {
         clearCoverArtDir();
@@ -191,15 +191,19 @@ public class MainActivity extends AppCompatActivity {
                     Log.i(LOG_TAG, "Fetching cover art...");
 
                     List<Album> albums = getChartAlbums(rawChartJson);
-                    for (int i = 0; i < albums.size(); i++) {
-                        fetchCoverArt(albums.get(i), i + PNG);
+                    if (albums != null) {
+                        for (int i = 0; i < albums.size(); i++) {
+                            fetchCoverArt(albums.get(i), i + PNG);
+                        }
+                    } else {
+                        showToast(R.string.toast_generate_invalid_numalbums);
                     }
                 },
                 error -> {
                     int errorMessageId;
                     if (error instanceof ClientError) {
                         Log.e(LOG_TAG, "StringRequest error: Invalid username");
-                        errorMessageId = R.string.toast_username_invalid;
+                        errorMessageId = R.string.toast_generate_invalid_username;
                     } else if (error.networkResponse == null) {
                         Log.e(LOG_TAG, "StringRequest error: Device couldn't connect to network");
                         errorMessageId = R.string.toast_generate_error_network;
@@ -241,7 +245,7 @@ public class MainActivity extends AppCompatActivity {
                                 },
                                 0, 0, null, null,
                                 error -> {
-                                    // TODO: improve (MBID solution?)
+                                    // TODO: fix this; occurs when album has special character (MBID solution?)
                                     Log.e(LOG_TAG, "Fetch error (ImageRequest):  " + album);
 
                                     saveCoverArt(saveLocation, null);
@@ -308,7 +312,7 @@ public class MainActivity extends AppCompatActivity {
 
     // TODO: Javadoc
     private void saveCoverArt(File saveLocation, Bitmap coverArt) {
-        // TODO: improve
+        // TODO: improve by not just putting a black bitmap if cover wasn't found
         if (coverArt == null) {
             saveBitmap(saveLocation, getBlackBitmap(COVERART_SIZE));
         } else {
@@ -347,15 +351,19 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Returns the list of albums that are to be included in this collage, e.g. the first 16 albums in the list
-     * returned by the call to user.getWeeklyAlbumChart if a 4x4 collage is selected.
+     * returned by the call to user.getWeeklyAlbumChart if a 4x4 collage is selected. Returns null if the user doesn't
+     * have enough albums to create a chart of the chosen size.
      *
      * @param chartJson the raw JSON result of the call to user.getWeeklyAlbumChart
      */
     private List<Album> getChartAlbums(String chartJson) {
         chartJson = chartJson.replace("#", ""); // Removing the #s found in some of Last.fm's JSON keys
         AlbumChart chart = gson.fromJson(chartJson, AlbumChart.class);
-        int numAlbums = Math.min(getCollageSize() * getCollageSize(), chart.getAlbums().size());
-        return chart.getAlbums().subList(0, numAlbums);
+        int numAlbumsInChart = getCollageSize() * getCollageSize();
+        if (numAlbumsInChart > chart.getAlbums().size()) {
+            return null;
+        }
+        return chart.getAlbums().subList(0, numAlbumsInChart);
     }
 
     /**
@@ -371,9 +379,10 @@ public class MainActivity extends AppCompatActivity {
         return largestImage.getString("#text");
     }
 
-    // TODO: Javadoc
+    /**
+     * @return whether the number of files saved in the cover art directory equals the number of albums in the collage
+     */
     private boolean doneFetchingCoverArt() {
-        // TODO: handle user not having enough albums
         return getCoverArtDir().listFiles().length == getCollageSize() * getCollageSize();
     }
 

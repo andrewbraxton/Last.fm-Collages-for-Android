@@ -1,7 +1,8 @@
 <resources>
     <string name="app_name">Last.fm Collages</string>
 
-    <string name="toast_username_invalid">Please ensure the Last.fm username is valid</string>
+    <string name="toast_generate_invalid_numalbums">This user hasn\'t listened to enough albums during this time period to create a chart of this size</string>
+    <string name="toast_generate_invalid_username">Please ensure the Last.fm username is valid</string>
     <string name="toast_generate_error_network">Please check your internet connection</string>
     <string name="toast_generate_error_api">It appears the Last.fm API is down, please try again later</string>
     <string name="toast_generate_successful">Collage generated!</string>

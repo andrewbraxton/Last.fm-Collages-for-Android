@@ -49,8 +49,9 @@ import java.util.List;
  */
 public class MainActivity extends AppCompatActivity {
 
-    // TODO: look into problem with album names containing ampersands (maybe other characters? MBID solution?)
     // TODO: placeholder collage image?
+    // TODO: save something other than a black bitmap if cover art not found
+    // TODO: increase Volley timeout limit?
     // TODO: app icon
     // TODO: notifications
 
@@ -212,13 +213,13 @@ public class MainActivity extends AppCompatActivity {
                 error -> {
                     int errorMessageId;
                     if (error instanceof ClientError) {
-                        Log.e(LOG_TAG, "StringRequest error: Invalid username");
+                        Log.e(LOG_TAG, "Chart request error: Invalid username");
                         errorMessageId = R.string.toast_generate_invalid_username;
                     } else if (error.networkResponse == null) {
-                        Log.e(LOG_TAG, "StringRequest error: Device couldn't connect to network");
+                        Log.e(LOG_TAG, "Chart request error: Device couldn't connect to network");
                         errorMessageId = R.string.toast_generate_error_network;
                     } else {
-                        Log.e(LOG_TAG, "StringRequest error: Last.fm API down");
+                        Log.e(LOG_TAG, "Chart request error: Last.fm API down");
                         errorMessageId = R.string.toast_generate_error_api;
                     }
                     generateButton.setEnabled(true);
@@ -249,7 +250,7 @@ public class MainActivity extends AppCompatActivity {
                                 coverArt -> {
                                     Log.d(LOG_TAG, "Fetch success: " + album);
 
-                                    saveCoverArt(saveLocation, coverArt);
+                                    saveBitmap(saveLocation, coverArt);
                                     if (doneFetchingCoverArt()) {
                                         handleAllCoverArtFetched();
                                     }
@@ -258,7 +259,7 @@ public class MainActivity extends AppCompatActivity {
                                 error -> {
                                     Log.e(LOG_TAG, "Fetch error (ImageRequest):  " + album);
 
-                                    saveCoverArt(saveLocation, null);
+                                    saveBitmap(saveLocation, getBlackBitmap(COVERART_SIZE));
                                     if (doneFetchingCoverArt()) {
                                         handleAllCoverArtFetched();
                                     }
@@ -267,7 +268,7 @@ public class MainActivity extends AppCompatActivity {
                     } catch (JSONException e) {
                         Log.e(LOG_TAG, "Fetch error (No cover art found): " + album);
 
-                        saveCoverArt(saveLocation, null);
+                        saveBitmap(saveLocation, getBlackBitmap(COVERART_SIZE));
                         if (doneFetchingCoverArt()) {
                             handleAllCoverArtFetched();
                         }
@@ -319,16 +320,6 @@ public class MainActivity extends AppCompatActivity {
         collageView.setImageBitmap(collage);
 
         Log.i(LOG_TAG, "Collage displayed");
-    }
-
-    // TODO: Javadoc
-    private void saveCoverArt(File saveLocation, Bitmap coverArt) {
-        // TODO: improve by not just putting a black bitmap if cover wasn't found
-        if (coverArt == null) {
-            saveBitmap(saveLocation, getBlackBitmap(COVERART_SIZE));
-        } else {
-            saveBitmap(saveLocation, coverArt);
-        }
     }
 
     /**

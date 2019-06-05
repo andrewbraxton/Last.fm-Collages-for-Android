@@ -17,7 +17,6 @@ public final class ApiStringBuilder {
     public static final String PARAM_TODATE = "&to=";
     public static final String PARAM_ARTIST = "&artist=";
     public static final String PARAM_ALBUM = "&album=";
-    public static final String PARAM_MBID = "&mbid=";
     public static final String FORMAT_JSON = "&format=json";
 
     public static final String API_KEY = "";
@@ -45,13 +44,26 @@ public final class ApiStringBuilder {
      * @param album the album to fetch the info for
      */
     public static final String buildGetAlbumInfoUrl(Album album) {
-        // TODO: look into MBID weirdness
         String url = BASE_URL + METHOD + ALBUM_GET_INFO;
         url += PARAM_APIKEY + API_KEY;
-        url += PARAM_ARTIST + album.getArtistName() + PARAM_ALBUM + album.getName();
-        //url += PARAM_MBID + album.getMbid();
+        url += PARAM_ARTIST + percentEncodeString(album.getArtistName());
+        url += PARAM_ALBUM + percentEncodeString(album.getName());
         url += FORMAT_JSON;
         return url;
+    }
+
+    /**
+     * Returns a string with its special characters like ' ' and '&' replaced with their respective percent-encodings.
+     * Needed for artists/albums with certain special characters in their titles. Character replacements are hard-coded
+     * so character list is not exhaustive.
+     *
+     * @param str the string to percent-encode
+     */
+    private static final String percentEncodeString(String str) {
+        // TODO: add more special characters to replace
+        str = str.replace(" ", "%20");
+        str = str.replace("&", "%26");
+        return str;
     }
 
     private ApiStringBuilder() {} // to make the class non-instantiable

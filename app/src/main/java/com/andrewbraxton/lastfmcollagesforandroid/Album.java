@@ -12,9 +12,7 @@ import com.google.gson.annotations.SerializedName;
 public class Album {
 
     private Artist artist;
-    private String mbid;
     private String name;
-    private String url;
 
     private class Artist {
         @SerializedName("#text")
@@ -30,16 +28,8 @@ public class Album {
         return artist.text;
     }
 
-    public String getMbid() {
-        return mbid;
-    }
-
     public String getName() {
         return name;
-    }
-
-    public String getUrl() {
-        return url;
     }
 
 }

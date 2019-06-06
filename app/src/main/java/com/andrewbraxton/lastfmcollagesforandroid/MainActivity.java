@@ -28,6 +28,7 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.android.volley.ClientError;
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.ImageRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
@@ -50,8 +51,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     // TODO: placeholder collage image?
-    // TODO: save something other than a black bitmap if cover art not found
-    // TODO: increase Volley timeout limit?
+    // TODO: save something other than a black bitmap if cover art not found (handleCoverArtFetched())
     // TODO: app icon
     // TODO: notifications
 
@@ -67,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
     private Button generateButton;
     private ProgressBar progressBar;
     private RequestQueue queue;
+    private DefaultRetryPolicy retryPolicy;
     private final Gson gson = new Gson();
 
     // Functions called by Android system.
@@ -86,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
         generateButton = findViewById(R.id.button_generate);
         progressBar = findViewById(R.id.progressBar);
         queue = Volley.newRequestQueue(this);
+        retryPolicy = new DefaultRetryPolicy(5000, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT);
 
         getCoverArtDir().mkdir();
         getCollageDir().mkdir();
@@ -227,6 +229,7 @@ public class MainActivity extends AppCompatActivity {
                     showToast(errorMessageId);
                 }
         );
+        chartRequest.setRetryPolicy(retryPolicy);
         queue.add(chartRequest);
     }
 
@@ -247,31 +250,13 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         ImageRequest imageRequest = new ImageRequest(
                                 getLargestImageUrl(albumInfo),
-                                coverArt -> {
-                                    Log.d(LOG_TAG, "Fetch success: " + album);
-
-                                    saveBitmap(saveLocation, coverArt);
-                                    if (doneFetchingCoverArt()) {
-                                        handleAllCoverArtFetched();
-                                    }
-                                },
+                                coverArt -> handleCoverArtFetched(album, saveLocation, coverArt),
                                 0, 0, null, null,
-                                error -> {
-                                    Log.e(LOG_TAG, "Fetch error (ImageRequest):  " + album);
-
-                                    saveBitmap(saveLocation, getBlackBitmap(COVERART_SIZE));
-                                    if (doneFetchingCoverArt()) {
-                                        handleAllCoverArtFetched();
-                                    }
-                                });
+                                error -> handleCoverArtFetched(album, saveLocation, null));
+                        imageRequest.setRetryPolicy(retryPolicy);
                         queue.add(imageRequest);
                     } catch (JSONException e) {
-                        Log.e(LOG_TAG, "Fetch error (No cover art found): " + album);
-
-                        saveBitmap(saveLocation, getBlackBitmap(COVERART_SIZE));
-                        if (doneFetchingCoverArt()) {
-                            handleAllCoverArtFetched();
-                        }
+                        handleCoverArtFetched(album, saveLocation, null);
                     }
                 },
                 error -> {
@@ -280,8 +265,41 @@ public class MainActivity extends AppCompatActivity {
                     Log.e(LOG_TAG, "Fetch error (HTTP 405 error): " + album);
                     fetchCoverArt(album, filename);
                 });
-
+        jsonObjectRequest.setRetryPolicy(retryPolicy);
         queue.add(jsonObjectRequest);
+    }
+
+    /**
+     * Saves the cover art to internal storage and calls handleAllCoverFetched() if necessary.
+     *
+     * @param album        the album that the cover art is for
+     * @param saveLocation the location to save the cover art to
+     * @param coverArt     the album's cover art, null if the cover art couldn't be fetched
+     */
+    private void handleCoverArtFetched(Album album, File saveLocation, Bitmap coverArt) {
+        if (coverArt != null) {
+            Log.i(LOG_TAG, "Fetch success: " + album);
+            saveBitmap(saveLocation, coverArt);
+        } else {
+            Log.e(LOG_TAG, "Fetch error: " + album);
+            saveBitmap(saveLocation, getBlackBitmap(COVERART_SIZE));
+        }
+
+        boolean allCoverArtFetched = getCoverArtDir().listFiles().length == getCollageSize() * getCollageSize();
+        if (allCoverArtFetched) {
+            handleAllCoverArtFetched();
+        }
+    }
+
+    /**
+     * Should be called after checking that doneFetchingCoverArt() returns true. Creates and displays the collage from
+     * the downloaded cover art, re-enables the generate button, and shows a "successful generation" toast.
+     */
+    private void handleAllCoverArtFetched() {
+        displayCollage(createCollageBitmap());
+        generateButton.setEnabled(true);
+        progressBar.setVisibility(View.INVISIBLE);
+        showToast(R.string.toast_generate_successful);
     }
 
     /**
@@ -378,24 +396,6 @@ public class MainActivity extends AppCompatActivity {
         JSONArray imageUrls = albumInfo.getJSONObject("album").getJSONArray("image");
         JSONObject largestImage = imageUrls.getJSONObject(imageUrls.length() - 1);
         return largestImage.getString("#text");
-    }
-
-    /**
-     * @return whether the number of files saved in the cover art directory equals the number of albums in the collage
-     */
-    private boolean doneFetchingCoverArt() {
-        return getCoverArtDir().listFiles().length == getCollageSize() * getCollageSize();
-    }
-
-    /**
-     * Should be called after checking that doneFetchingCoverArt() returns true. Creates and displays the collage from
-     * the downloaded cover art, re-enables the generate button, and shows a "successful generation" toast.
-     */
-    private void handleAllCoverArtFetched() {
-        displayCollage(createCollageBitmap());
-        generateButton.setEnabled(true);
-        progressBar.setVisibility(View.INVISIBLE);
-        showToast(R.string.toast_generate_successful);
     }
 
     /**

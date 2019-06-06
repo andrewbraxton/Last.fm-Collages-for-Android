@@ -9,7 +9,7 @@ import com.google.gson.annotations.SerializedName;
  * Note: NOT intended to represent the album JSON object returned by call to album.getInfo (that object is structured
  * differently).
  */
-public class Album {
+class Album {
 
     private Artist artist;
     private String name;

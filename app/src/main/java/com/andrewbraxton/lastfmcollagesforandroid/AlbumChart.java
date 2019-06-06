@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * Represents the JSON object returned by a call to user.getWeeklyAlbumChart. For use with Gson's fromJson().
  */
-public class AlbumChart {
+class AlbumChart {
 
     private WeeklyAlbumChart weeklyalbumchart;
 

@@ -53,9 +53,6 @@ import java.util.List;
  */
 public class MainActivity extends AppCompatActivity {
 
-    // TODO: app icon
-    // TODO: notifications
-
     private static final String LOG_TAG = "MainActivityTag";
     private static final String FILEPROVIDER_AUTHORITY = "com.andrewbraxton.lastfmcollages.fileprovider";
 

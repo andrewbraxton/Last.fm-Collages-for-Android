@@ -7,10 +7,14 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.text.Layout;
+import android.text.StaticLayout;
+import android.text.TextPaint;
 import android.util.Log;
 import android.content.Intent;
 
@@ -281,13 +285,35 @@ public class MainActivity extends AppCompatActivity {
             saveBitmap(saveLocation, coverArt);
         } else {
             Log.e(LOG_TAG, "Fetch error: " + album);
-            saveBitmap(saveLocation, getBlackBitmap(COVERART_SIZE));
+            saveBitmap(saveLocation, drawGenericCoverArt(album));
         }
 
         boolean allCoverArtFetched = getCoverArtDir().listFiles().length == getCollageSize() * getCollageSize();
         if (allCoverArtFetched) {
             handleAllCoverArtFetched();
         }
+    }
+
+    /**
+     * Creates and returns a generic cover art for when an album's cover art couldn't be fetched. The generic art is
+     * simply the artist name on top of the album name.
+     *
+     * @param album the album to create generic cover art for
+     */
+    private Bitmap drawGenericCoverArt(Album album) {
+        Bitmap coverArt = getBlackBitmap(COVERART_SIZE);
+        Canvas canvas = new Canvas(coverArt);
+        TextPaint paint = new TextPaint();
+        paint.setColor(Color.RED);
+        paint.setTextAlign(Paint.Align.CENTER);
+        paint.setTextSize(40);
+
+        String text = album.getArtistName() + "\n" + album.getName();
+        StaticLayout layout = new StaticLayout(text, paint, COVERART_SIZE, Layout.Alignment.ALIGN_NORMAL, 1, 0, false);
+        canvas.translate(canvas.getWidth() / 2, canvas.getHeight() / 2 - layout.getHeight() / 2);
+        layout.draw(canvas);
+
+        return coverArt;
     }
 
     /**

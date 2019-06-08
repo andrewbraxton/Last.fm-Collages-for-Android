@@ -12,7 +12,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
-import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.util.Log;
@@ -54,7 +53,6 @@ import java.util.List;
  */
 public class MainActivity extends AppCompatActivity {
 
-    // TODO: save something other than a black bitmap if cover art not found (handleCoverArtFetched())
     // TODO: app icon
     // TODO: notifications
 
@@ -295,28 +293,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Creates and returns a generic cover art for when an album's cover art couldn't be fetched. The generic art is
-     * simply the artist name on top of the album name.
-     *
-     * @param album the album to create generic cover art for
-     */
-    private Bitmap drawGenericCoverArt(Album album) {
-        Bitmap coverArt = getBlackBitmap(COVERART_SIZE);
-        Canvas canvas = new Canvas(coverArt);
-        TextPaint paint = new TextPaint();
-        paint.setColor(Color.RED);
-        paint.setTextAlign(Paint.Align.CENTER);
-        paint.setTextSize(40);
-
-        String text = album.getArtistName() + "\n" + album.getName();
-        StaticLayout layout = new StaticLayout(text, paint, COVERART_SIZE, Layout.Alignment.ALIGN_NORMAL, 1, 0, false);
-        canvas.translate(canvas.getWidth() / 2, canvas.getHeight() / 2 - layout.getHeight() / 2);
-        layout.draw(canvas);
-
-        return coverArt;
-    }
-
-    /**
      * Should be called after checking that doneFetchingCoverArt() returns true. Creates and displays the collage from
      * the downloaded cover art, re-enables the generate button, and shows a "successful generation" toast.
      */
@@ -392,6 +368,28 @@ public class MainActivity extends AppCompatActivity {
         Bitmap blackBmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
         blackBmp.eraseColor(Color.BLACK);
         return blackBmp;
+    }
+
+    /**
+     * Creates and returns a generic cover art for when an album's cover art couldn't be fetched. The generic art is
+     * simply the artist name on top of the album name.
+     *
+     * @param album the album to create generic cover art for
+     */
+    private Bitmap drawGenericCoverArt(Album album) {
+        Bitmap coverArt = getBlackBitmap(COVERART_SIZE);
+        Canvas canvas = new Canvas(coverArt);
+        TextPaint paint = new TextPaint();
+        paint.setColor(Color.WHITE);
+        paint.setTextAlign(Paint.Align.CENTER);
+        paint.setTextSize(40);
+
+        String text = album.getArtistName() + "\n" + album.getName();
+        StaticLayout layout = StaticLayout.Builder.obtain(text, 0, text.length(), paint, COVERART_SIZE).build();
+        canvas.translate(canvas.getWidth() / 2, canvas.getHeight() / 2 - layout.getHeight() / 2);
+        layout.draw(canvas);
+
+        return coverArt;
     }
 
     /**

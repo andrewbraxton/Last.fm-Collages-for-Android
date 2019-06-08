@@ -50,7 +50,6 @@ import java.util.List;
  */
 public class MainActivity extends AppCompatActivity {
 
-    // TODO: placeholder collage image?
     // TODO: save something other than a black bitmap if cover art not found (handleCoverArtFetched())
     // TODO: app icon
     // TODO: notifications

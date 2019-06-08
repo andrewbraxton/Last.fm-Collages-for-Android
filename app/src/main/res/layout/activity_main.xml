@@ -18,7 +18,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/main_toolbar"
-        app:layout_constraintVertical_bias="0.23000002" />
+        app:layout_constraintVertical_bias="0.23000002"
+        app:srcCompat="@drawable/lastfm_logo" />
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/main_toolbar"

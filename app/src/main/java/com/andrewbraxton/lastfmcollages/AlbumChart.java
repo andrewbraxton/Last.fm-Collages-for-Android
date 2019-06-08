@@ -1,4 +1,4 @@
-package com.andrewbraxton.lastfmcollagesforandroid;
+package com.andrewbraxton.lastfmcollages;
 
 import java.util.List;
 

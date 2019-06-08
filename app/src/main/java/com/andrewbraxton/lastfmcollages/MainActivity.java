@@ -1,4 +1,4 @@
-package com.andrewbraxton.lastfmcollagesforandroid;
+package com.andrewbraxton.lastfmcollages;
 
 import android.Manifest;
 import android.content.SharedPreferences;
@@ -57,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
     // TODO: notifications
 
     private static final String LOG_TAG = "MainActivityTag";
-    private static final String FILEPROVIDER_AUTHORITY = "com.andrewbraxton.lastfmcollagesforandroid.fileprovider";
+    private static final String FILEPROVIDER_AUTHORITY = "com.andrewbraxton.lastfmcollages.fileprovider";
 
     private static final int COVERART_SIZE = 300; // length/width in pixels of the largest cover art returned by API
     private static final String COVERART = "coverart";

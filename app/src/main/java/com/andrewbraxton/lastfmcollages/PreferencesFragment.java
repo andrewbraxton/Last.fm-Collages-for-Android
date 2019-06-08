@@ -1,4 +1,4 @@
-package com.andrewbraxton.lastfmcollagesforandroid;
+package com.andrewbraxton.lastfmcollages;
 
 import android.os.Bundle;
 import androidx.preference.PreferenceFragmentCompat;

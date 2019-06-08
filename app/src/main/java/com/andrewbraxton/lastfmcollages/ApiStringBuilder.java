@@ -1,4 +1,4 @@
-package com.andrewbraxton.lastfmcollagesforandroid;
+package com.andrewbraxton.lastfmcollages;
 
 /**
  * This class provides methods to build URLs for making requests to the Last.fm API.

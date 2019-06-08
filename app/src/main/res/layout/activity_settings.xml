@@ -18,7 +18,7 @@
 
     <fragment
         android:id="@+id/prefs_fragment"
-        android:name="com.andrewbraxton.lastfmcollagesforandroid.PreferencesFragment"
+        android:name="com.andrewbraxton.lastfmcollages.PreferencesFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 

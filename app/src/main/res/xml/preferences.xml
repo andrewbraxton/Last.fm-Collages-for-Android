@@ -19,7 +19,7 @@
             android:title="@string/pref_size_title"
             app:iconSpaceReserved="false" />
         <ListPreference
-            android:defaultValue="7"
+            android:defaultValue="7day"
             android:entries="@array/collage_period_names_array"
             android:entryValues="@array/collage_period_values_array"
             android:key="@string/key_pref_period"

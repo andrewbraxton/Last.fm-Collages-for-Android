@@ -20,9 +20,9 @@
             app:iconSpaceReserved="false" />
         <ListPreference
             android:defaultValue="7"
-            android:entries="@array/collage_range_names_array"
-            android:entryValues="@array/collage_range_values_array"
-            android:key="@string/key_pref_num_days"
+            android:entries="@array/collage_period_names_array"
+            android:entryValues="@array/collage_period_values_array"
+            android:key="@string/key_pref_period"
             android:title="@string/pref_date_range_title"
             app:iconSpaceReserved="false" />
     </PreferenceCategory>

@@ -37,15 +37,16 @@ import com.android.volley.toolbox.ImageRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -184,7 +185,7 @@ public class MainActivity extends AppCompatActivity {
     // Private functions.
 
     /**
-     * Makes the initial API call to user.getWeeklyAlbumChart and then calls fetchCoverArt() for each album in the
+     * Makes the API call to user.getTopAlbums and then calls fetchCoverArt() for each album in the
      * collage. Much of the actual "generation" work is placed in fetchCoverArt() due to Volley's asynchronous task
      * execution. Also handles various problems at the initial generation phase (invalid username, API down, etc.).
      */
@@ -193,21 +194,22 @@ public class MainActivity extends AppCompatActivity {
         generateButton.setEnabled(false);
         progressBar.setVisibility(View.VISIBLE);
 
-        JsonObjectRequest chartRequest = new JsonObjectRequest(
-                ApiStringBuilder.buildGetAlbumChartUrl(getUsername(), getFromDate(), getToDate()),
+        JsonObjectRequest topAlbumsRequest = new JsonObjectRequest(
+                ApiStringBuilder.buildGetTopAlbumsUrl(getUsername(), getPeriod(), getNumAlbums()),
                 null,
-                chartJsonObj -> {
-                    Log.i(LOG_TAG, "Fetching cover art...");
+                response -> {
+                    Log.i(LOG_TAG, "Fetching top albums...");
 
-                    List<Album> albums = parseChartAlbums(chartJsonObj);
-                    if (albums != null) {
-                        for (int i = 0; i < albums.size(); i++) {
-                            fetchCoverArt(albums.get(i), i + PNG);
-                        }
-                    } else {
+                    List<Album> albums = parseAlbumList(response);
+                    if (albums.size() < getNumAlbums()) {
                         generateButton.setEnabled(true);
                         progressBar.setVisibility(View.INVISIBLE);
                         showToast(R.string.toast_generate_invalid_numalbums);
+                    } else {
+                        for (int i = 0; i < albums.size(); i++) {
+                            Album album = albums.get(i);
+                            fetchCoverArt(album, i + PNG);
+                        }
                     }
                 },
                 error -> {
@@ -222,18 +224,19 @@ public class MainActivity extends AppCompatActivity {
                         Log.e(LOG_TAG, "Chart request error: Last.fm API down");
                         errorMessageId = R.string.toast_generate_error_api;
                     }
+
                     generateButton.setEnabled(true);
                     progressBar.setVisibility(View.INVISIBLE);
                     showToast(errorMessageId);
                 }
         );
-        chartRequest.setRetryPolicy(retryPolicy);
-        queue.add(chartRequest);
+        topAlbumsRequest.setRetryPolicy(retryPolicy);
+        queue.add(topAlbumsRequest);
     }
 
     /**
-     * Fetches the cover art for an album from the Last.fm API and downloads it to internal storage. Also responsible
-     * for displaying the collage when all covers have been downloaded (must be placed here due to Volley's
+     * Fetches the cover art for an album from the URL provided by Last.fm and downloads it to internal storage.
+     * Also responsible for displaying the collage when all covers have been downloaded (placed here due to Volley's
      * asynchronous task execution).
      *
      * @param album    the album to get the cover art for
@@ -241,30 +244,14 @@ public class MainActivity extends AppCompatActivity {
      */
     private void fetchCoverArt(Album album, String filename) {
         File saveLocation = new File(getCoverArtDir(), filename);
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
-                ApiStringBuilder.buildGetAlbumInfoUrl(album),
-                null,
-                albumInfo -> {
-                    try {
-                        ImageRequest imageRequest = new ImageRequest(
-                                getLargestImageUrl(albumInfo),
-                                coverArt -> handleCoverArtFetched(album, saveLocation, coverArt),
-                                0, 0, null, null,
-                                error -> handleCoverArtFetched(album, saveLocation, null));
-                        imageRequest.setRetryPolicy(retryPolicy);
-                        queue.add(imageRequest);
-                    } catch (JSONException e) {
-                        handleCoverArtFetched(album, saveLocation, null);
-                    }
-                },
-                error -> {
-                    // this error occurs randomly when the API decides to return a 405 error for no apparent reason
-                    // we just retry the request until the API cooperates
-                    Log.e(LOG_TAG, "Fetch error (HTTP 405 error): " + album);
-                    fetchCoverArt(album, filename);
-                });
-        jsonObjectRequest.setRetryPolicy(retryPolicy);
-        queue.add(jsonObjectRequest);
+        ImageRequest coverArtRequest = new ImageRequest(
+                album.getLargestCoverArtUrl(),
+                coverArt -> handleCoverArtFetched(album, saveLocation, coverArt),
+                0, 0, null, null,
+                error -> handleCoverArtFetched(album, saveLocation, null)
+        );
+        coverArtRequest.setRetryPolicy(retryPolicy);
+        queue.add(coverArtRequest);
     }
 
     /**
@@ -283,7 +270,7 @@ public class MainActivity extends AppCompatActivity {
             saveBitmap(saveLocation, drawGenericCoverArt(album));
         }
 
-        boolean allCoverArtFetched = getCoverArtDir().listFiles().length == getCollageSize() * getCollageSize();
+        boolean allCoverArtFetched = getCoverArtDir().listFiles().length == getNumAlbums();
         if (allCoverArtFetched) {
             handleAllCoverArtFetched();
         }
@@ -298,6 +285,18 @@ public class MainActivity extends AppCompatActivity {
         generateButton.setEnabled(true);
         progressBar.setVisibility(View.INVISIBLE);
         showToast(R.string.toast_generate_successful);
+    }
+
+    /**
+     * Takes the raw response from the result of the Volley request to user.getTopAlbums and returns the list of albums
+     * to be included in the collage.
+     *
+     * @param response the org.json.JSONObject returned by the request to user.getTopAlbums
+     */
+    private List<Album> parseAlbumList(JSONObject response) {
+        JsonObject convertedResponse = gson.fromJson(response.toString(), JsonObject.class);
+        JsonArray albumsArray = convertedResponse.getAsJsonObject("topalbums").getAsJsonArray("album");
+        return Arrays.asList(gson.fromJson(albumsArray, Album[].class));
     }
 
     /**
@@ -390,35 +389,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Returns the list of albums that are to be included in this collage, e.g. the first 16 albums in the list
-     * returned by the call to user.getWeeklyAlbumChart if a 4x4 collage is selected. Returns null if the user doesn't
-     * have enough albums to create a chart of the chosen size.
-     *
-     * @param chartJsonObj the JSONObject (not JsonObject) result of the call to user.getWeeklyAlbumChart
-     */
-    private List<Album> parseChartAlbums(JSONObject chartJsonObj) {
-        AlbumChart chart = gson.fromJson(chartJsonObj.toString(), AlbumChart.class);
-        int numAlbumsInChart = getCollageSize() * getCollageSize();
-        if (numAlbumsInChart > chart.getAlbums().size()) {
-            return null;
-        }
-        return chart.getAlbums().subList(0, numAlbumsInChart);
-    }
-
-    /**
-     * Returns the URL of the largest cover art returned by the call to album.getAlbumInfo (the API returns an array
-     * of images in ascending size order).
-     *
-     * @param albumInfo the JSONObject returned by the call to album.getAlbumInfo
-     * @throws JSONException if Last.fm doesn't have any cover art on file for this album
-     */
-    private String getLargestImageUrl(JSONObject albumInfo) throws JSONException {
-        JSONArray imageUrls = albumInfo.getJSONObject("album").getJSONArray("image");
-        JSONObject largestImage = imageUrls.getJSONObject(imageUrls.length() - 1);
-        return largestImage.getString("#text");
-    }
-
-    /**
      * Shortcut for displaying a toast.
      *
      * @param resId the resource id of the message to display
@@ -442,13 +412,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * @return the number of days the collage spans as chosen in settings
-     */
-    private int getNumDays() {
-        return Integer.parseInt(getPrefs().getString(getString(R.string.key_pref_num_days), "7"));
-    }
-
-    /**
      * @return the number of albums per row/column of the collage as chosen in settings, e.g. 3 for a 3x3 collage
      */
     private int getCollageSize() {
@@ -456,20 +419,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * @return the Unix timestamp of the collage's begin date for use in the "from" API parameter
+     * @return the total number of albums in the collage as chosen in settings; equal to getCollageSize() squared
      */
-    private long getFromDate() {
-        if (getNumDays() == -1) { // "All-time" was selected in preferences
-            return 0;
-        }
-        return getToDate() - (getNumDays() * 86400); // 86400 seconds in a day
+    private int getNumAlbums() {
+        return getCollageSize() * getCollageSize();
     }
 
     /**
-     * @return the Unix timestamp of the current moment for use in the "to" API parameter
+     * @return the date range for this collage as chosen in settings
      */
-    private long getToDate() {
-        return System.currentTimeMillis() / 1000L;
+    private String getPeriod() {
+        return getPrefs().getString(getString(R.string.key_pref_period), "7day");
     }
 
     /**
@@ -488,8 +448,8 @@ public class MainActivity extends AppCompatActivity {
         if (collageFile.exists()) {
             if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
                 Bitmap collage = BitmapFactory.decodeFile(collageFile.getAbsolutePath());
-                File saveLocation = new File(getPublicCollageDir(), COLLAGE + getToDate() + PNG);
-                saveBitmap(saveLocation, collage);
+                String filename = COLLAGE + (System.currentTimeMillis() / 1000L) + PNG;
+                saveBitmap(new File(getPublicCollageDir(), filename), collage);
                 showToast(R.string.toast_save_successful);
             } else {
                 Log.e(LOG_TAG, "Device not allowing file saving");

@@ -11,16 +11,16 @@
         <item>5</item>
     </string-array>
 
-    <string-array name="collage_range_names_array">
+    <string-array name="collage_period_names_array">
         <item>Week</item>
         <item>Month</item>
         <item>Year</item>
         <item>All-time</item>
     </string-array>
-    <string-array name="collage_range_values_array">
-        <item>7</item>
-        <item>30</item>
-        <item>365</item>
-        <item>-1</item>
+    <string-array name="collage_period_values_array">
+        <item>7day</item>
+        <item>1month</item>
+        <item>12month</item>
+        <item>overall</item>
     </string-array>
 </resources>

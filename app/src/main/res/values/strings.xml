@@ -21,8 +21,10 @@
     <string name="pref_username_title">Last.fm username</string>
     <string name="pref_size_title">Collage size</string>
     <string name="pref_date_range_title">Date range</string>
+    <string name="pref_artists_title">Artists only</string>
 
     <string name="key_pref_username">username</string>
     <string name="key_pref_size">size</string>
     <string name="key_pref_period">period</string>
+    <string name="key_pref_artists">artists</string>
 </resources>

@@ -14,7 +14,6 @@ import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.text.StaticLayout;
 import android.text.TextPaint;
-import android.util.Log;
 import android.content.Intent;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -22,6 +21,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -194,21 +194,27 @@ public class MainActivity extends AppCompatActivity {
         generateButton.setEnabled(false);
         progressBar.setVisibility(View.VISIBLE);
 
-        JsonObjectRequest topAlbumsRequest = new JsonObjectRequest(
-                ApiStringBuilder.buildGetTopAlbumsUrl(getUsername(), getPeriod(), getNumAlbums()),
+        String apiUrl;
+        if (artistsOnly()) {
+            apiUrl = ApiStringBuilder.buildGetTopArtistsUrl(getUsername(), getPeriod(), getNumItems());
+        } else {
+            apiUrl = ApiStringBuilder.buildGetTopAlbumsUrl(getUsername(), getPeriod(), getNumItems());
+        }
+
+        JsonObjectRequest topMusicObjectRequest = new JsonObjectRequest(
+                apiUrl,
                 null,
                 response -> {
-                    Log.i(LOG_TAG, "Fetching top albums...");
+                    Log.i(LOG_TAG, "Fetching top music items...");
 
-                    List<Album> albums = parseAlbumList(response);
-                    if (albums.size() < getNumAlbums()) {
+                    List<MusicItem> musicItems = parseMusicItemList(response);
+                    if (musicItems.size() < getNumItems()) {
                         generateButton.setEnabled(true);
                         progressBar.setVisibility(View.INVISIBLE);
                         showToast(R.string.toast_generate_invalid_numalbums);
                     } else {
-                        for (int i = 0; i < albums.size(); i++) {
-                            Album album = albums.get(i);
-                            fetchCoverArt(album, i + PNG);
+                        for (int i = 0; i < musicItems.size(); i++) {
+                            fetchCoverArt(musicItems.get(i), i + PNG);
                         }
                     }
                 },
@@ -230,8 +236,8 @@ public class MainActivity extends AppCompatActivity {
                     showToast(errorMessageId);
                 }
         );
-        topAlbumsRequest.setRetryPolicy(retryPolicy);
-        queue.add(topAlbumsRequest);
+        topMusicObjectRequest.setRetryPolicy(retryPolicy);
+        queue.add(topMusicObjectRequest);
     }
 
     /**
@@ -242,13 +248,15 @@ public class MainActivity extends AppCompatActivity {
      * @param album    the album to get the cover art for
      * @param filename the name that the downloaded file will have
      */
-    private void fetchCoverArt(Album album, String filename) {
+    private void fetchCoverArt(MusicItem musicItem, String filename) {
+        String url = musicItem.getLargestImageUrl();
+
         File saveLocation = new File(getCoverArtDir(), filename);
         ImageRequest coverArtRequest = new ImageRequest(
-                album.getLargestCoverArtUrl(),
-                coverArt -> handleCoverArtFetched(album, saveLocation, coverArt),
+                musicItem.getLargestImageUrl(),
+                coverArt -> handleCoverArtFetched(musicItem, saveLocation, coverArt),
                 0, 0, null, null,
-                error -> handleCoverArtFetched(album, saveLocation, null)
+                error -> handleCoverArtFetched(musicItem, saveLocation, null)
         );
         coverArtRequest.setRetryPolicy(retryPolicy);
         queue.add(coverArtRequest);
@@ -261,16 +269,16 @@ public class MainActivity extends AppCompatActivity {
      * @param saveLocation the location to save the cover art to
      * @param coverArt     the album's cover art, null if the cover art couldn't be fetched
      */
-    private void handleCoverArtFetched(Album album, File saveLocation, Bitmap coverArt) {
+    private void handleCoverArtFetched(MusicItem musicItem, File saveLocation, Bitmap coverArt) {
         if (coverArt != null) {
-            Log.i(LOG_TAG, "Fetch success: " + album);
+            Log.i(LOG_TAG, "Fetch success: " + musicItem);
             saveBitmap(saveLocation, coverArt);
         } else {
-            Log.e(LOG_TAG, "Fetch error: " + album);
-            saveBitmap(saveLocation, drawGenericCoverArt(album));
+            Log.e(LOG_TAG, "Fetch error: " + musicItem);
+            saveBitmap(saveLocation, drawGenericCoverArt(musicItem));
         }
 
-        boolean allCoverArtFetched = getCoverArtDir().listFiles().length == getNumAlbums();
+        boolean allCoverArtFetched = getCoverArtDir().listFiles().length == getNumItems();
         if (allCoverArtFetched) {
             handleAllCoverArtFetched();
         }
@@ -293,10 +301,16 @@ public class MainActivity extends AppCompatActivity {
      *
      * @param response the org.json.JSONObject returned by the request to user.getTopAlbums
      */
-    private List<Album> parseAlbumList(JSONObject response) {
+    private List<MusicItem> parseMusicItemList(JSONObject response) {
         JsonObject convertedResponse = gson.fromJson(response.toString(), JsonObject.class);
-        JsonArray albumsArray = convertedResponse.getAsJsonObject("topalbums").getAsJsonArray("album");
-        return Arrays.asList(gson.fromJson(albumsArray, Album[].class));
+
+        if (artistsOnly()) {
+            JsonArray artistsArray = convertedResponse.getAsJsonObject("topartists").getAsJsonArray("artist");
+            return Arrays.asList(gson.fromJson(artistsArray, Artist[].class));
+        } else {
+            JsonArray albumsArray = convertedResponse.getAsJsonObject("topalbums").getAsJsonArray("album");
+            return Arrays.asList(gson.fromJson(albumsArray, Album[].class));
+        }
     }
 
     /**
@@ -372,7 +386,7 @@ public class MainActivity extends AppCompatActivity {
      *
      * @param album the album to create generic cover art for
      */
-    private Bitmap drawGenericCoverArt(Album album) {
+    private Bitmap drawGenericCoverArt(MusicItem musicItem) {
         Bitmap coverArt = getBlackBitmap(COVERART_SIZE);
         Canvas canvas = new Canvas(coverArt);
         TextPaint paint = new TextPaint();
@@ -380,7 +394,12 @@ public class MainActivity extends AppCompatActivity {
         paint.setTextAlign(Paint.Align.CENTER);
         paint.setTextSize(40);
 
-        String text = album.getArtistName() + "\n" + album.getName();
+        String text;
+        if (artistsOnly()) {
+            text = musicItem.getName();
+        } else {
+            text = ((Album) musicItem).getArtistName() + "\n" + musicItem.getName();
+        }
         StaticLayout layout = StaticLayout.Builder.obtain(text, 0, text.length(), paint, COVERART_SIZE).build();
         canvas.translate(canvas.getWidth() / 2, canvas.getHeight() / 2 - layout.getHeight() / 2);
         layout.draw(canvas);
@@ -421,7 +440,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * @return the total number of albums in the collage as chosen in settings; equal to getCollageSize() squared
      */
-    private int getNumAlbums() {
+    private int getNumItems() {
         return getCollageSize() * getCollageSize();
     }
 
@@ -430,6 +449,13 @@ public class MainActivity extends AppCompatActivity {
      */
     private String getPeriod() {
         return getPrefs().getString(getString(R.string.key_pref_period), "7day");
+    }
+
+    /**
+     * @return true if the user enabled artist-only collages in settings, false if not
+     */
+    private boolean artistsOnly() {
+        return getPrefs().getBoolean(getString(R.string.key_pref_artists), false);
     }
 
     /**

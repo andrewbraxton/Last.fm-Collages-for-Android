@@ -25,6 +25,11 @@
             android:key="@string/key_pref_period"
             android:title="@string/pref_date_range_title"
             app:iconSpaceReserved="false" />
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="@string/key_pref_artists"
+            android:title="@string/pref_artists_title"
+            app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
 </PreferenceScreen>
